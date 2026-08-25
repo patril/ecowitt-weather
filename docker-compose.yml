@@ -29,7 +29,7 @@ services:
     restart: unless-stopped
     # Exposing this port is useful for testing from the host with curl.
     ports:
-      - "8080:8080"
+      - "8081:8080"
 
   collector:
     build:
@@ -65,4 +65,4 @@ services:
       - ${DATA_ROOT:?Set DATA_ROOT in .env}/grafana:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
     ports:
-      - "3000:3000"
+      - "3001:3000"

@@ -3,14 +3,14 @@ import os
 import time
 from datetime import datetime, timezone
 
-import psycopg
 import requests
+
+from dao import insert_lightning, insert_rain, insert_weather
 
 USE_MOCK_GW3000 = os.environ.get("USE_MOCK_GW3000", "false").strip().lower() in {"1", "true", "yes", "on"}
 ECOWITT_REAL_URL = os.environ.get("ECOWITT_REAL_URL", "http://192.168.4.131/get_livedata_info")
 MOCK_GW3000_URL = os.environ.get("MOCK_GW3000_URL", "http://mock-gw3000:8080/get_livedata_info")
 ECOWITT_URL = MOCK_GW3000_URL if USE_MOCK_GW3000 else ECOWITT_REAL_URL
-DATABASE_URL = os.environ["DATABASE_URL"]
 POLL_SECONDS = int(os.environ.get("POLL_SECONDS", "30"))
 
 
@@ -113,65 +113,6 @@ def parse_lightning(payload, observed_at):
     }
 
 
-def insert_weather(cur, row):
-    cur.execute(
-        """
-        INSERT INTO weather_observation (
-            observed_at, outdoor_temp_f, outdoor_humidity_pct, feels_like_f,
-            dewpoint_f, wind_speed_mph, wind_gust_mph, daily_max_wind_mph,
-            wind_direction_deg, solar_w_m2, uv_index, indoor_temp_f,
-            indoor_humidity_pct, absolute_pressure_inhg, relative_pressure_inhg,
-            raw_json
-        ) VALUES (
-            %(observed_at)s, %(outdoor_temp_f)s, %(outdoor_humidity_pct)s,
-            %(feels_like_f)s, %(dewpoint_f)s, %(wind_speed_mph)s,
-            %(wind_gust_mph)s, %(daily_max_wind_mph)s,
-            %(wind_direction_deg)s, %(solar_w_m2)s, %(uv_index)s,
-            %(indoor_temp_f)s, %(indoor_humidity_pct)s,
-            %(absolute_pressure_inhg)s, %(relative_pressure_inhg)s,
-            %(raw_json)s::jsonb
-        )
-        """,
-        row,
-    )
-
-
-def insert_rain(cur, row):
-    cur.execute(
-        """
-        INSERT INTO rain_observation (
-            observed_at, source, event_rain_in, rain_rate_in_hr,
-            daily_rain_in, weekly_rain_in, monthly_rain_in, yearly_rain_in,
-            battery_level, battery_voltage_v, ws90_cap_voltage_v,
-            ws90_firmware, raw_json
-        ) VALUES (
-            %(observed_at)s, %(source)s, %(event_rain_in)s, %(rain_rate_in_hr)s,
-            %(daily_rain_in)s, %(weekly_rain_in)s, %(monthly_rain_in)s,
-            %(yearly_rain_in)s, %(battery_level)s, %(battery_voltage_v)s,
-            %(ws90_cap_voltage_v)s, %(ws90_firmware)s, %(raw_json)s::jsonb
-        )
-        """,
-        row,
-    )
-
-
-def insert_lightning(cur, row):
-    if row is None:
-        return
-    cur.execute(
-        """
-        INSERT INTO lightning_observation (
-            observed_at, last_strike_at_local, distance_miles,
-            cumulative_count, battery_level, raw_json
-        ) VALUES (
-            %(observed_at)s, %(last_strike_at_local)s, %(distance_miles)s,
-            %(cumulative_count)s, %(battery_level)s, %(raw_json)s::jsonb
-        )
-        """,
-        row,
-    )
-
-
 def collect_once():
     response = requests.get(ECOWITT_URL, timeout=10)
     response.raise_for_status()
@@ -183,15 +124,12 @@ def collect_once():
     rain_ws90 = parse_rain_group(payload.get("piezoRain") or [], observed_at, "ws90")
     lightning = parse_lightning(payload, observed_at)
 
-    with psycopg.connect(DATABASE_URL) as conn:
-        with conn.cursor() as cur:
-            insert_weather(cur, weather)
-            if payload.get("rain"):
-                insert_rain(cur, rain_wh40)
-            if payload.get("piezoRain"):
-                insert_rain(cur, rain_ws90)
-            insert_lightning(cur, lightning)
-        conn.commit()
+    insert_weather(weather)
+    if payload.get("rain"):
+        insert_rain(rain_wh40)
+    if payload.get("piezoRain"):
+        insert_rain(rain_ws90)
+    insert_lightning(lightning)
 
     print(
         f"Stored observation {observed_at.isoformat()} "
