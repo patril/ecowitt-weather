@@ -7,6 +7,8 @@ A small Raspberry Pi weather-data stack for the Ecowitt GW3000:
 - Python collector polling the GW3000 local HTTP API
 - Mock GW3000 service for off-network development
 - Grafana automatically provisioned with PostgreSQL as its default datasource
+- Source-controlled Grafana weather dashboard provisioned automatically at startup
+- nginx reverse proxy publishing the dashboard at `http://weather.local/`
 - Daily solar-energy integration from stored irradiance observations
 - Containerized cron scheduler for daily solar-energy calculations
 
@@ -62,7 +64,8 @@ The mock GW3000 is published at:
 curl http://localhost:8081/get_livedata_info
 ```
 
-Grafana is available at `http://localhost:3001`.
+Grafana is served through nginx on host port 80. The production hostname is `weather.local`.
+For local development, add a temporary hosts-file entry for `weather.local` pointing at the development machine if needed.
 
 When testing against the physical gateway while on the home LAN, set:
 
@@ -89,6 +92,20 @@ After the first boot:
 sudo apt update
 sudo apt full-upgrade -y
 sudo reboot
+```
+
+Set the Pi hostname so mDNS advertises it as `weather.local`:
+
+```bash
+sudo hostnamectl set-hostname weather
+sudo reboot
+```
+
+Verify after reboot:
+
+```bash
+hostname
+systemctl status avahi-daemon
 ```
 
 Set and verify the station timezone:
@@ -206,7 +223,7 @@ Then verify all services:
 docker compose ps
 ```
 
-You should see PostgreSQL, the collector, Grafana, the mock service, and the daily-energy scheduler.
+You should see PostgreSQL, the collector, Grafana, nginx, the mock service, and the daily-energy scheduler.
 The mock remains running but is ignored when `USE_MOCK_GW3000=false`.
 
 Useful logs:
@@ -214,16 +231,17 @@ Useful logs:
 ```bash
 docker compose logs -f collector
 docker compose logs -f daily-energy-scheduler
+docker compose logs -f nginx
 ```
 
-Grafana is published on Pi port `3001`, so browse to:
+Browse to:
 
 ```text
-http://<pi-ip-address>:3001
+http://weather.local/
 ```
 
-PostgreSQL is intentionally **not exposed to the LAN**. Grafana, the collector, and the scheduler
-reach it over the private Compose network.
+nginx is the only dashboard-facing service published to the LAN. Grafana listens on port 3000 only
+inside the private Compose network, and PostgreSQL is also intentionally **not exposed to the LAN**.
 
 ### 8. First database initialization vs. later upgrades
 
@@ -338,6 +356,9 @@ docker compose logs -f collector
 
 # Follow daily scheduler
 docker compose logs -f daily-energy-scheduler
+
+# Follow reverse proxy
+docker compose logs -f nginx
 
 # Confirm Pi USB storage is mounted
 findmnt /mnt/weather-data
