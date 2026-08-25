@@ -5,15 +5,17 @@ A small Raspberry Pi weather-data stack for the Ecowitt GW3000:
 - Raspberry Pi OS + Docker on the **microSD card**
 - PostgreSQL and Grafana persistent data on a **USB/thumb drive**
 - Python collector polling the GW3000 local HTTP API
+- Mock GW3000 service for off-network development
 - Grafana automatically provisioned with PostgreSQL as its default datasource
 - Daily solar-energy integration from stored irradiance observations
+- Containerized cron scheduler for daily solar-energy calculations
 
 ## Hardware/storage layout
 
 ```text
-Raspberry Pi 4
+Raspberry Pi 4 Model B (2 GB)
 ├── microSD
-│   ├── Raspberry Pi OS
+│   ├── Raspberry Pi OS 64-bit
 │   ├── Docker / Compose
 │   └── this project
 │
@@ -27,9 +29,109 @@ The Compose project uses bind mounts rather than Docker named volumes. The `scri
 wrapper refuses to start if `/mnt/weather-data` is not actually mounted, preventing a failed
 USB mount from silently putting PostgreSQL data onto the microSD card.
 
-## 1. Mount the thumb drive permanently
+The initial target is a Raspberry Pi 4 Model B with 2 GB RAM. PostgreSQL is configured with a modest
+64 MB `shared_buffers` setting. This is enough for the expected weather workload, and the persistent
+storage is independent of the Pi so the computer can be replaced later without redesigning the stack.
 
-Format the intended thumb drive as ext4, then find its UUID:
+## Laptop development
+
+On a development machine, use a normal local directory for persistent data rather than pretending
+that the Pi's USB mount exists:
+
+```text
+DATA_ROOT=./data
+USE_MOCK_GW3000=true
+STATION_TIMEZONE=America/New_York
+```
+
+Prepare the bind-mounted directories:
+
+```bash
+./scripts/setup-data.sh
+```
+
+Then start the stack:
+
+```bash
+docker compose up -d --build
+```
+
+The mock GW3000 is published at:
+
+```bash
+curl http://localhost:8081/get_livedata_info
+```
+
+Grafana is available at `http://localhost:3001`.
+
+When testing against the physical gateway while on the home LAN, set:
+
+```text
+USE_MOCK_GW3000=false
+ECOWITT_REAL_URL=http://192.168.4.131/get_livedata_info
+```
+
+The GW3000 address should remain reserved in Eero.
+
+## Raspberry Pi deployment
+
+The Pi deployment is intentionally straightforward: the microSD contains replaceable software;
+the USB drive contains the persistent database and Grafana state.
+
+### 1. Install Raspberry Pi OS
+
+Use **64-bit Raspberry Pi OS Lite** on the microSD card. The Pi is a headless server, so the desktop
+environment is unnecessary. Enable SSH during imaging if you want to administer it remotely.
+
+After the first boot:
+
+```bash
+sudo apt update
+sudo apt full-upgrade -y
+sudo reboot
+```
+
+Set and verify the station timezone:
+
+```bash
+sudo timedatectl set-timezone America/New_York
+timedatectl
+```
+
+### 2. Install Docker Engine and Compose
+
+Use Docker Engine with the Compose plugin rather than the Snap package. For 64-bit Raspberry Pi OS,
+Docker's supported Debian `arm64` installation is appropriate. Follow Docker's current Debian
+installation instructions, then verify:
+
+```bash
+docker --version
+docker compose version
+sudo systemctl status docker
+```
+
+If you choose to run Docker without `sudo`, add your user to the `docker` group and log out/back in:
+
+```bash
+sudo usermod -aG docker "$USER"
+```
+
+> Membership in the `docker` group effectively grants root-level control of the host. On this
+> dedicated Pi that is a deliberate administrative choice.
+
+### 3. Clone the project
+
+For example:
+
+```bash
+cd ~
+git clone https://github.com/patril/ecowitt-weather.git
+cd ecowitt-weather
+```
+
+### 4. Mount the USB data drive permanently
+
+Format the intended USB drive as ext4, then find its UUID:
 
 ```bash
 lsblk -f
@@ -41,62 +143,100 @@ Create the mount point:
 sudo mkdir -p /mnt/weather-data
 ```
 
-Add an `/etc/fstab` entry using the drive's real UUID:
+Add an `/etc/fstab` entry using the drive's actual UUID:
 
 ```text
 UUID=YOUR-USB-UUID /mnt/weather-data ext4 defaults,noatime,nofail,x-systemd.device-timeout=10 0 2
 ```
 
-Then:
+Then verify the mount:
 
 ```bash
 sudo mount -a
 findmnt /mnt/weather-data
 ```
 
-`findmnt` should show the USB drive as the source for `/mnt/weather-data`.
+`findmnt` should show the USB device as the source for `/mnt/weather-data`.
 
-> `nofail` allows the Pi itself to boot if the USB drive is absent. The supplied start script
-> still refuses to launch the weather stack until the drive is mounted.
+`nofail` lets the Pi itself boot if the USB drive is absent. The supplied `scripts/start.sh` still
+refuses to launch the weather stack until `/mnt/weather-data` is really mounted.
 
-## 2. Configure the project
+### 5. Configure `.env` for the Pi
 
-Create `.env` and set at least the passwords and data root. The real GW3000 URL observed during development is:
+Create `.env` in the project directory. At minimum configure the data root, passwords, station URL,
+and timezone:
 
 ```text
 DATA_ROOT=/mnt/weather-data
+POSTGRES_DB=weather
+POSTGRES_USER=weather
+POSTGRES_PASSWORD=CHOOSE_A_PASSWORD
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=CHOOSE_A_DIFFERENT_PASSWORD
+USE_MOCK_GW3000=false
 ECOWITT_REAL_URL=http://192.168.4.131/get_livedata_info
 STATION_TIMEZONE=America/New_York
-USE_MOCK_GW3000=false
+POLL_SECONDS=30
+DAILY_ENERGY_MAX_GAP_SECONDS=300
 ```
 
-Keep the GW3000 address reserved in Eero. On a development machine, `DATA_ROOT=./data` is convenient.
+Do not commit `.env`.
 
-## 3. Prepare persistent directories
+### 6. Prepare the persistent directories
 
-After the USB drive is mounted on the Pi:
+After the USB drive is mounted:
 
 ```bash
 ./scripts/prepare-usb.sh
 ```
 
-For development, `scripts/setup-data.sh` prepares the configured `DATA_ROOT` with the ownership expected by PostgreSQL and Grafana.
+This creates the PostgreSQL and Grafana directories with the ownership expected by their containers.
 
-## 4. Start the stack
+### 7. Start the stack
 
-Use the guarded start script on the Pi:
+Use the guarded start script:
 
 ```bash
 ./scripts/start.sh
 ```
 
-Or, after verifying storage yourself:
+Then verify all services:
 
 ```bash
-docker compose up -d --build
+docker compose ps
 ```
 
-Grafana is published on host port `3001`. PostgreSQL is intentionally **not exposed to the LAN**. Grafana and the collector reach it over the private Docker Compose network.
+You should see PostgreSQL, the collector, Grafana, the mock service, and the daily-energy scheduler.
+The mock remains running but is ignored when `USE_MOCK_GW3000=false`.
+
+Useful logs:
+
+```bash
+docker compose logs -f collector
+docker compose logs -f daily-energy-scheduler
+```
+
+Grafana is published on Pi port `3001`, so browse to:
+
+```text
+http://<pi-ip-address>:3001
+```
+
+PostgreSQL is intentionally **not exposed to the LAN**. Grafana, the collector, and the scheduler
+reach it over the private Compose network.
+
+### 8. First database initialization vs. later upgrades
+
+On a brand-new USB data directory, PostgreSQL automatically runs the SQL files under
+`postgres/init/` when it initializes the database.
+
+When updating an existing installation after pulling a version that adds a schema migration, run:
+
+```bash
+bash scripts/run-migrations.sh
+```
+
+Do this before running code that depends on the new schema.
 
 ## Database schema
 
@@ -124,44 +264,57 @@ The gateway's strike time has no timezone offset, so it is stored as a PostgreSQ
 
 ### `daily_solar_energy`
 
-Stores the trapezoidal integration of each station-local day's irradiance readings. `energy_wh_m2` is in Wh/m²; divide by 1000 for kWh/m²/day. The row also stores sample count, detected sampling gaps, the largest gap, a completeness flag, and calculation time.
+Stores the trapezoidal integration of each station-local day's irradiance readings. `energy_wh_m2`
+is in Wh/m²; divide by 1000 for kWh/m²/day. The row also stores sample count, detected sampling gaps,
+the largest gap, a completeness flag, and calculation time.
 
-Intervals longer than the configured maximum gap (five minutes by default) are **not** interpolated. The partial energy is retained, but `is_complete=false`, so missing data cannot silently masquerade as a precise daily total.
+Intervals longer than the configured maximum gap (five minutes by default) are **not** interpolated.
+The partial energy is retained, but `is_complete=false`, so missing data cannot silently masquerade
+as a precise daily total.
 
-The date query uses half-open timestamp bounds in `STATION_TIMEZONE` (default `America/New_York`), including correct 23- and 25-hour DST days.
+The date query uses half-open timestamp bounds in `STATION_TIMEZONE` (default `America/New_York`),
+including correct 23- and 25-hour DST days.
 
-## Daily energy job
+## Containerized daily-energy schedule
 
-Calculate and upsert yesterday's value manually:
+No host crontab is required. `docker-compose.yml` includes a `daily-energy-scheduler` service built
+from the same Python source as the collector. The image contains Debian cron, and cron runs in the
+foreground as the container's main process.
+
+The scheduler calculates **yesterday** twice each station-local night:
+
+```text
+00:05  primary calculation
+03:00  recovery/recalculation
+```
+
+The second run is intentional. The database write is an upsert, so recalculation is harmless, while
+a brief reboot or database outage around midnight is less likely to leave a missing day.
+
+The scheduler uses `STATION_TIMEZONE`, so the schedule follows local Eastern time including DST.
+The default maximum accepted sampling gap is 300 seconds and can be changed in `.env`:
+
+```text
+DAILY_ENERGY_MAX_GAP_SECONDS=300
+```
+
+Inspect scheduler activity with:
+
+```bash
+docker compose logs daily-energy-scheduler
+```
+
+Calculate and upsert yesterday manually at any time:
 
 ```bash
 bash scripts/calculate-yesterday.sh
 ```
 
-Or calculate a specific date:
+Or calculate a specific station-local date:
 
 ```bash
 docker compose run --rm --no-deps collector python daily_energy_job.py 2026-08-25
 ```
-
-The upsert is idempotent, so recalculating a date safely replaces its previous result. A simple host cron schedule is sufficient. For example, run yesterday shortly after midnight and again at 03:00 as a recovery run:
-
-```cron
-5 0 * * * cd /home/patrick/ecowitt-weather && /bin/bash scripts/calculate-yesterday.sh >> /var/log/ecowitt-daily-energy.log 2>&1
-0 3 * * * cd /home/patrick/ecowitt-weather && /bin/bash scripts/calculate-yesterday.sh >> /var/log/ecowitt-daily-energy.log 2>&1
-```
-
-Adjust the project path and log destination for the Pi. Cron should run as a user that can access Docker.
-
-## Schema migrations
-
-SQL files under `postgres/init/` run automatically only when PostgreSQL initializes an empty data directory. For an existing database, apply the idempotent schema files with:
-
-```bash
-bash scripts/run-migrations.sh
-```
-
-Run this after pulling a version that adds a migration and before running code that depends on the new schema.
 
 ## Tests
 
@@ -171,55 +324,27 @@ The daily integration tests use Python's standard `unittest` module:
 docker compose run --rm --no-deps collector python -m unittest test_daily_energy.py
 ```
 
-They cover units, irregular sampling, missing-data gaps, empty/single-reading days, and station-local DST boundaries.
+They cover units, irregular sampling, missing-data gaps, empty/single-reading days, and station-local
+DST boundaries.
 
 ## Useful commands
 
 ```bash
-# Confirm USB storage is mounted
-findmnt /mnt/weather-data
-
 # See service status
 docker compose ps
 
-# Follow collector output
+# Follow weather collection
 docker compose logs -f collector
+
+# Follow daily scheduler
+docker compose logs -f daily-energy-scheduler
+
+# Confirm Pi USB storage is mounted
+findmnt /mnt/weather-data
+
+# Apply schema changes to an existing database
+bash scripts/run-migrations.sh
 
 # Stop the stack
 docker compose down
 ```
-
-## Raspberry Pi 4 Model B (2 GB)
-
-The initial target is a Raspberry Pi 4 Model B with 2 GB RAM. This is sufficient for this low-volume weather workload. PostgreSQL is configured with a modest 64 MB `shared_buffers` setting to keep the stack comfortable on 2 GB. The storage design deliberately keeps the persistent data independent of the Pi hardware, so a later Pi upgrade does not require redesigning the application.
-
-## Real vs. mock GW3000
-
-The Compose stack includes `mock-gw3000`, a tiny Python HTTP service that implements `/get_livedata_info` using the same JSON shape observed from the physical GW3000. It generates gently changing temperature, wind, solar and related values so Grafana charts continue to move during development.
-
-Choose the source in `.env`:
-
-```text
-USE_MOCK_GW3000=false
-ECOWITT_REAL_URL=http://192.168.4.131/get_livedata_info
-```
-
-Away from home, change only:
-
-```text
-USE_MOCK_GW3000=true
-```
-
-and restart the collector:
-
-```bash
-docker compose up -d --build collector mock-gw3000
-```
-
-The mock is published to the host at port `8081`, so it can be inspected directly:
-
-```bash
-curl http://localhost:8081/get_livedata_info
-```
-
-Inside Docker, the collector reaches the mock as `http://mock-gw3000:8080/get_livedata_info`; no host networking trickery is required.

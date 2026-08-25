@@ -49,6 +49,20 @@ services:
       STATION_TIMEZONE: ${STATION_TIMEZONE:-America/New_York}
       DATABASE_URL: postgresql://${POSTGRES_USER:-weather}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-weather}
 
+  daily-energy-scheduler:
+    build:
+      context: ./collector
+    container_name: ecowitt-daily-energy-scheduler
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["/app/cron-entrypoint.sh"]
+    environment:
+      STATION_TIMEZONE: ${STATION_TIMEZONE:-America/New_York}
+      DAILY_ENERGY_MAX_GAP_SECONDS: ${DAILY_ENERGY_MAX_GAP_SECONDS:-300}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-weather}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-weather}
+
   grafana:
     image: grafana/grafana:latest
     container_name: ecowitt-grafana
