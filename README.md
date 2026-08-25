@@ -6,6 +6,7 @@ A small Raspberry Pi weather-data stack for the Ecowitt GW3000:
 - PostgreSQL and Grafana persistent data on a **USB/thumb drive**
 - Python collector polling the GW3000 local HTTP API
 - Grafana automatically provisioned with PostgreSQL as its default datasource
+- Daily solar-energy integration from stored irradiance observations
 
 ## Hardware/storage layout
 
@@ -60,51 +61,42 @@ findmnt /mnt/weather-data
 
 ## 2. Configure the project
 
-```bash
-cp .env.example .env
-```
-
-The sample is already set to the GW3000 address observed during development:
+Create `.env` and set at least the passwords and data root. The real GW3000 URL observed during development is:
 
 ```text
-ECOWITT_URL=http://192.168.4.131/get_livedata_info
+DATA_ROOT=/mnt/weather-data
+ECOWITT_REAL_URL=http://192.168.4.131/get_livedata_info
+STATION_TIMEZONE=America/New_York
+USE_MOCK_GW3000=false
 ```
 
-Keep that address reserved in Eero, and change the two example passwords in `.env`.
+Keep the GW3000 address reserved in Eero. On a development machine, `DATA_ROOT=./data` is convenient.
 
-## 3. Prepare USB directories
+## 3. Prepare persistent directories
 
-After the drive is mounted:
+After the USB drive is mounted on the Pi:
 
 ```bash
 ./scripts/prepare-usb.sh
 ```
 
-This creates the PostgreSQL and Grafana directories and sets the ownership expected by their
-containers.
+For development, `scripts/setup-data.sh` prepares the configured `DATA_ROOT` with the ownership expected by PostgreSQL and Grafana.
 
 ## 4. Start the stack
 
-Use the guarded start script:
+Use the guarded start script on the Pi:
 
 ```bash
 ./scripts/start.sh
 ```
 
-Or, after verifying the drive is mounted yourself:
+Or, after verifying storage yourself:
 
 ```bash
 docker compose up -d --build
 ```
 
-Grafana will be available at:
-
-```text
-http://<raspberry-pi-ip>:3000
-```
-
-PostgreSQL is intentionally **not exposed to the LAN**. Grafana and the collector reach it over
-the private Docker Compose network.
+Grafana is published on host port `3001`. PostgreSQL is intentionally **not exposed to the LAN**. Grafana and the collector reach it over the private Docker Compose network.
 
 ## Database schema
 
@@ -130,6 +122,57 @@ Stores the WH57's most recently reported strike time, distance, cumulative count
 The gateway's strike time has no timezone offset, so it is stored as a PostgreSQL `TIMESTAMP`
 (local station time) rather than pretending it is UTC.
 
+### `daily_solar_energy`
+
+Stores the trapezoidal integration of each station-local day's irradiance readings. `energy_wh_m2` is in Wh/m²; divide by 1000 for kWh/m²/day. The row also stores sample count, detected sampling gaps, the largest gap, a completeness flag, and calculation time.
+
+Intervals longer than the configured maximum gap (five minutes by default) are **not** interpolated. The partial energy is retained, but `is_complete=false`, so missing data cannot silently masquerade as a precise daily total.
+
+The date query uses half-open timestamp bounds in `STATION_TIMEZONE` (default `America/New_York`), including correct 23- and 25-hour DST days.
+
+## Daily energy job
+
+Calculate and upsert yesterday's value manually:
+
+```bash
+bash scripts/calculate-yesterday.sh
+```
+
+Or calculate a specific date:
+
+```bash
+docker compose run --rm --no-deps collector python daily_energy_job.py 2026-08-25
+```
+
+The upsert is idempotent, so recalculating a date safely replaces its previous result. A simple host cron schedule is sufficient. For example, run yesterday shortly after midnight and again at 03:00 as a recovery run:
+
+```cron
+5 0 * * * cd /home/patrick/ecowitt-weather && /bin/bash scripts/calculate-yesterday.sh >> /var/log/ecowitt-daily-energy.log 2>&1
+0 3 * * * cd /home/patrick/ecowitt-weather && /bin/bash scripts/calculate-yesterday.sh >> /var/log/ecowitt-daily-energy.log 2>&1
+```
+
+Adjust the project path and log destination for the Pi. Cron should run as a user that can access Docker.
+
+## Schema migrations
+
+SQL files under `postgres/init/` run automatically only when PostgreSQL initializes an empty data directory. For an existing database, apply the idempotent schema files with:
+
+```bash
+bash scripts/run-migrations.sh
+```
+
+Run this after pulling a version that adds a migration and before running code that depends on the new schema.
+
+## Tests
+
+The daily integration tests use Python's standard `unittest` module:
+
+```bash
+docker compose run --rm --no-deps collector python -m unittest test_daily_energy.py
+```
+
+They cover units, irregular sampling, missing-data gaps, empty/single-reading days, and station-local DST boundaries.
+
 ## Useful commands
 
 ```bash
@@ -146,12 +189,6 @@ docker compose logs -f collector
 docker compose down
 ```
 
-## First-run schema behavior
-
-SQL files under `postgres/init/` run automatically only when PostgreSQL initializes an empty data
-directory. That is appropriate for a new thumb drive. Future schema changes should be handled as
-migrations rather than by editing the initial schema and expecting an existing database to change.
-
 ## Raspberry Pi 4 Model B (2 GB)
 
 The initial target is a Raspberry Pi 4 Model B with 2 GB RAM. This is sufficient for this low-volume weather workload. PostgreSQL is configured with a modest 64 MB `shared_buffers` setting to keep the stack comfortable on 2 GB. The storage design deliberately keeps the persistent data independent of the Pi hardware, so a later Pi upgrade does not require redesigning the application.
@@ -167,7 +204,7 @@ USE_MOCK_GW3000=false
 ECOWITT_REAL_URL=http://192.168.4.131/get_livedata_info
 ```
 
-Use the physical station while on the home LAN. Away from home, change only:
+Away from home, change only:
 
 ```text
 USE_MOCK_GW3000=true
@@ -179,10 +216,10 @@ and restart the collector:
 docker compose up -d --build collector mock-gw3000
 ```
 
-The mock is also published to the host at port 8080, so it can be inspected directly:
+The mock is published to the host at port `8081`, so it can be inspected directly:
 
 ```bash
-curl http://localhost:8080/get_livedata_info
+curl http://localhost:8081/get_livedata_info
 ```
 
-Inside Docker, the collector always reaches the mock as `http://mock-gw3000:8080/get_livedata_info`; no host networking trickery is required.
+Inside Docker, the collector reaches the mock as `http://mock-gw3000:8080/get_livedata_info`; no host networking trickery is required.

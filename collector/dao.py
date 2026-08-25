@@ -1,14 +1,17 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, time, timedelta
 from typing import TYPE_CHECKING, Mapping
+from zoneinfo import ZoneInfo
 import os
 import psycopg
 
 if TYPE_CHECKING:
-    from collector.dto.IrradianceReading import IrradianceReading
+    from daily_energy import DailyEnergyResult
+    from dto.IrradianceReading import IrradianceReading
 
 DATABASE_URL = os.environ["DATABASE_URL"]
+STATION_TIMEZONE = ZoneInfo(os.environ.get("STATION_TIMEZONE", "America/New_York"))
 
 
 def _insert(sql: str, row: Mapping[str, object]) -> None:
@@ -18,13 +21,63 @@ def _insert(sql: str, row: Mapping[str, object]) -> None:
         conn.commit()
 
 
-def get_irradiance_readings(date: date) -> list[IrradianceReading]:
-    from collector.dto.IrradianceReading import IrradianceReading
+def station_day_bounds(observation_date: date) -> tuple[datetime, datetime]:
+    start = datetime.combine(observation_date, time.min, tzinfo=STATION_TIMEZONE)
+    end = datetime.combine(observation_date + timedelta(days=1), time.min, tzinfo=STATION_TIMEZONE)
+    return start, end
+
+
+def get_irradiance_readings(observation_date: date) -> list[IrradianceReading]:
+    from dto.IrradianceReading import IrradianceReading
+
+    start, end = station_day_bounds(observation_date)
 
     with psycopg.connect(DATABASE_URL) as conn:
         with conn.cursor() as cur:
-            cur.execute("select observed_at, solar_w_m2 from weather_observation where date_trunc('day', observed_at) = %s order by observed_at asc", (date,))
-            return [IrradianceReading(observed_at=row[0], irradiance=row[1]) for row in cur.fetchall()]
+            cur.execute(
+                """
+                SELECT observed_at, solar_w_m2
+                FROM weather_observation
+                WHERE observed_at >= %s
+                  AND observed_at < %s
+                  AND solar_w_m2 IS NOT NULL
+                ORDER BY observed_at ASC
+                """,
+                (start, end),
+            )
+            return [
+                IrradianceReading(observed_at=row[0], irradiance=row[1])
+                for row in cur.fetchall()
+            ]
+
+
+def upsert_daily_solar_energy(result: DailyEnergyResult) -> None:
+    with psycopg.connect(DATABASE_URL) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO daily_solar_energy (
+                    observation_date, energy_wh_m2, sample_count, gap_count,
+                    max_gap_seconds, is_complete, calculated_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, NOW())
+                ON CONFLICT (observation_date) DO UPDATE SET
+                    energy_wh_m2 = EXCLUDED.energy_wh_m2,
+                    sample_count = EXCLUDED.sample_count,
+                    gap_count = EXCLUDED.gap_count,
+                    max_gap_seconds = EXCLUDED.max_gap_seconds,
+                    is_complete = EXCLUDED.is_complete,
+                    calculated_at = NOW()
+                """,
+                (
+                    result.observation_date,
+                    result.energy_wh_m2,
+                    result.sample_count,
+                    result.gap_count,
+                    result.max_gap_seconds,
+                    result.is_complete,
+                ),
+            )
+        conn.commit()
 
 
 def insert_weather(row: Mapping[str, object]) -> None:
