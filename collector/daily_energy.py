@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timezone
 
 from dao import get_irradiance_readings, station_day_bounds
 from dto.IrradianceReading import IrradianceReading
@@ -66,7 +66,9 @@ class DailyEnergy:
             ])
             max_gap_seconds = max(all_intervals, default=0.0)
         else:
-            max_gap_seconds = (day_end - day_start).total_seconds()
+            max_gap_seconds = (
+                day_end.astimezone(timezone.utc) - day_start.astimezone(timezone.utc)
+            ).total_seconds()
 
         return DailyEnergyResult(
             observation_date=self.date,
