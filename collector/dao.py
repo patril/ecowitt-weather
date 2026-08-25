@@ -21,11 +21,16 @@ def _insert(sql: str, row: Mapping[str, object]) -> None:
         conn.commit()
 
 
+def station_day_bounds(observation_date: date) -> tuple[datetime, datetime]:
+    start = datetime.combine(observation_date, time.min, tzinfo=STATION_TIMEZONE)
+    end = datetime.combine(observation_date + timedelta(days=1), time.min, tzinfo=STATION_TIMEZONE)
+    return start, end
+
+
 def get_irradiance_readings(observation_date: date) -> list[IrradianceReading]:
     from dto.IrradianceReading import IrradianceReading
 
-    start = datetime.combine(observation_date, time.min, tzinfo=STATION_TIMEZONE)
-    end = start + timedelta(days=1)
+    start, end = station_day_bounds(observation_date)
 
     with psycopg.connect(DATABASE_URL) as conn:
         with conn.cursor() as cur:
