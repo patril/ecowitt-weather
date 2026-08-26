@@ -139,12 +139,25 @@
     },
     {
       "datasource": {"type": "postgres", "uid": "weather-postgres"},
-      "fieldConfig": {"defaults": {"unit": "kwatth", "decimals": 2, "min": 0}, "overrides": []},
+      "fieldConfig": {
+        "defaults": {"unit": "kwatth", "decimals": 2, "min": 0},
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Incomplete"},
+            "properties": [
+              {"id": "custom.drawStyle", "value": "points"},
+              {"id": "custom.showPoints", "value": "always"},
+              {"id": "custom.pointSize", "value": 8},
+              {"id": "custom.lineWidth", "value": 0},
+              {"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}
+            ]
+          }
+        ]
+      },
       "gridPos": {"h": 8, "w": 24, "x": 0, "y": 44},
       "id": 14,
-      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
-      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT observation_date::timestamp AS \"time\", energy_wh_m2 / 1000.0 AS \"Solar energy\" FROM daily_solar_energy WHERE observation_date BETWEEN $__timeFrom()::date AND $__timeTo()::date AND is_complete = TRUE ORDER BY observation_date", "refId": "A"}],
-      "timeFrom": "30d",
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}},
+      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT observation_date::timestamp AS \"time\", CASE WHEN is_complete THEN energy_wh_m2 / 1000.0 END AS \"Complete\", CASE WHEN NOT is_complete THEN energy_wh_m2 / 1000.0 END AS \"Incomplete\" FROM daily_solar_energy WHERE $__timeFilter(observation_date::timestamp) ORDER BY observation_date", "refId": "A"}],
       "title": "Daily Solar Energy (kWh/m²)",
       "type": "timeseries"
     }
