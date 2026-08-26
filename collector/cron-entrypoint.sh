@@ -20,15 +20,15 @@ with open("/run/ecowitt-cron.env", "w", encoding="utf-8") as env_file:
         env_file.write(f"export {key}={shlex.quote(value)}\n")
 PY
 
-cat > /etc/cron.d/ecowitt-daily-energy <<'EOF'
+cat > /etc/cron.d/ecowitt-daily-jobs <<'EOF'
 SHELL=/bin/sh
 PATH=/usr/local/bin:/usr/bin:/bin
 
-5 0 * * * root . /run/ecowitt-cron.env && cd /app && python daily_energy_job.py yesterday --max-gap-seconds "$DAILY_ENERGY_MAX_GAP_SECONDS" >> /proc/1/fd/1 2>> /proc/1/fd/2
-0 3 * * * root . /run/ecowitt-cron.env && cd /app && python daily_energy_job.py yesterday --max-gap-seconds "$DAILY_ENERGY_MAX_GAP_SECONDS" >> /proc/1/fd/1 2>> /proc/1/fd/2
+5 0 * * * root . /run/ecowitt-cron.env && cd /app && python daily_energy_job.py yesterday --max-gap-seconds "$DAILY_ENERGY_MAX_GAP_SECONDS" && python daily_weather_job.py yesterday >> /proc/1/fd/1 2>> /proc/1/fd/2
+0 3 * * * root . /run/ecowitt-cron.env && cd /app && python daily_energy_job.py yesterday --max-gap-seconds "$DAILY_ENERGY_MAX_GAP_SECONDS" && python daily_weather_job.py yesterday >> /proc/1/fd/1 2>> /proc/1/fd/2
 EOF
 
-chmod 0644 /etc/cron.d/ecowitt-daily-energy
+chmod 0644 /etc/cron.d/ecowitt-daily-jobs
 
-echo "Daily solar-energy scheduler enabled in ${STATION_TIMEZONE}: 00:05 and 03:00; max gap ${DAILY_ENERGY_MAX_GAP_SECONDS}s"
+echo "Daily schedulers enabled in ${STATION_TIMEZONE}: solar energy + weather fingerprint at 00:05 and 03:00; max gap ${DAILY_ENERGY_MAX_GAP_SECONDS}s"
 exec cron -f
