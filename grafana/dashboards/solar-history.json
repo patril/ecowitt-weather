@@ -1,0 +1,54 @@
+{
+  "annotations": {"list": []},
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "fieldConfig": {
+        "defaults": {"unit": "kwatth", "decimals": 2, "min": 0},
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Incomplete"},
+            "properties": [
+              {"id": "custom.drawStyle", "value": "points"},
+              {"id": "custom.showPoints", "value": "always"},
+              {"id": "custom.pointSize", "value": 8},
+              {"id": "custom.lineWidth", "value": 0},
+              {"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}
+            ]
+          }
+        ]
+      },
+      "gridPos": {"h": 12, "w": 24, "x": 0, "y": 0},
+      "id": 1,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}},
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT observation_date::timestamp + INTERVAL '12 hours' AS \"time\", CASE WHEN is_complete THEN energy_wh_m2 / 1000.0 END AS \"Complete\", CASE WHEN NOT is_complete THEN energy_wh_m2 / 1000.0 END AS \"Incomplete\" FROM daily_solar_energy WHERE $__timeFilter(observation_date::timestamp + INTERVAL '12 hours') ORDER BY observation_date",
+          "refId": "A"
+        }
+      ],
+      "title": "Daily Solar Energy (kWh/m²)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["ecowitt", "weather", "solar"],
+  "templating": {"list": []},
+  "time": {"from": "now-1y", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Solar History",
+  "uid": "ecowitt-solar-history",
+  "version": 1,
+  "weekStart": ""
+}
