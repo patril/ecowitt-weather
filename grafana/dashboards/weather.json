@@ -96,7 +96,7 @@
       "id": 14,
       "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
       "targets": [{"editorMode": "code", "format": "table", "rawQuery": true, "rawSql": "SELECT daily_rain_in AS \"Today\" FROM rain_observation WHERE source = 'wh40' ORDER BY observed_at DESC LIMIT 1", "refId": "A"}],
-      "title": "Today",
+      "title": "Rainfall Today",
       "type": "stat"
     },
     {
@@ -106,7 +106,7 @@
       "id": 15,
       "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
       "targets": [{"editorMode": "code", "format": "table", "rawQuery": true, "rawSql": "SELECT weekly_rain_in AS \"This week\" FROM rain_observation WHERE source = 'wh40' ORDER BY observed_at DESC LIMIT 1", "refId": "A"}],
-      "title": "This Week",
+      "title": "Rainfall This Week",
       "type": "stat"
     },
     {
@@ -116,7 +116,7 @@
       "id": 16,
       "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
       "targets": [{"editorMode": "code", "format": "table", "rawQuery": true, "rawSql": "SELECT monthly_rain_in AS \"This month\" FROM rain_observation WHERE source = 'wh40' ORDER BY observed_at DESC LIMIT 1", "refId": "A"}],
-      "title": "This Month",
+      "title": "Rainfall This Month",
       "type": "stat"
     },
     {
@@ -126,7 +126,7 @@
       "id": 17,
       "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
       "targets": [{"editorMode": "code", "format": "table", "rawQuery": true, "rawSql": "SELECT yearly_rain_in AS \"This year\" FROM rain_observation WHERE source = 'wh40' ORDER BY observed_at DESC LIMIT 1", "refId": "A"}],
-      "title": "This Year",
+      "title": "Rainfall This Year",
       "type": "stat"
     },
     {
