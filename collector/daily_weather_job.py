@@ -48,7 +48,9 @@ def calculate_and_upsert(observation_date: date) -> None:
                     WHERE observed_at >= %s AND observed_at < %s
                 ),
                 solar AS (
-                    SELECT energy_wh_m2 AS solar_energy_wh_m2
+                    SELECT
+                        energy_wh_m2 AS solar_energy_wh_m2,
+                        is_complete AS solar_energy_is_complete
                     FROM daily_solar_energy
                     WHERE observation_date = %s
                 )
@@ -62,6 +64,7 @@ def calculate_and_upsert(observation_date: date) -> None:
                     mean_wind_mph,
                     peak_irradiance_w_m2,
                     solar_energy_wh_m2,
+                    solar_energy_is_complete,
                     mean_relative_pressure_inhg,
                     lightning_strikes,
                     sample_count,
@@ -77,6 +80,7 @@ def calculate_and_upsert(observation_date: date) -> None:
                     weather.mean_wind_mph,
                     weather.peak_irradiance_w_m2,
                     solar.solar_energy_wh_m2,
+                    solar.solar_energy_is_complete,
                     weather.mean_relative_pressure_inhg,
                     lightning.lightning_strikes,
                     weather.sample_count,
@@ -85,6 +89,7 @@ def calculate_and_upsert(observation_date: date) -> None:
                 CROSS JOIN rain
                 CROSS JOIN lightning
                 LEFT JOIN solar ON TRUE
+                WHERE weather.sample_count > 0
                 ON CONFLICT (observation_date) DO UPDATE SET
                     high_temp_f = EXCLUDED.high_temp_f,
                     low_temp_f = EXCLUDED.low_temp_f,
@@ -94,6 +99,7 @@ def calculate_and_upsert(observation_date: date) -> None:
                     mean_wind_mph = EXCLUDED.mean_wind_mph,
                     peak_irradiance_w_m2 = EXCLUDED.peak_irradiance_w_m2,
                     solar_energy_wh_m2 = EXCLUDED.solar_energy_wh_m2,
+                    solar_energy_is_complete = EXCLUDED.solar_energy_is_complete,
                     mean_relative_pressure_inhg = EXCLUDED.mean_relative_pressure_inhg,
                     lightning_strikes = EXCLUDED.lightning_strikes,
                     sample_count = EXCLUDED.sample_count,
