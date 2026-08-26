@@ -1,5 +1,7 @@
 {
-  "annotations": {"list": []},
+  "annotations": {
+    "list": []
+  },
   "editable": false,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -89,48 +91,8 @@
     },
     {
       "datasource": {"type": "postgres", "uid": "weather-postgres"},
-      "fieldConfig": {"defaults": {"unit": "fahrenheit", "decimals": 1}, "overrides": []},
-      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 4},
-      "id": 9,
-      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}},
-      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT observed_at AS \"time\", outdoor_temp_f AS \"Outdoor temperature\", feels_like_f AS \"Feels like\", dewpoint_f AS \"Dew point\" FROM weather_observation WHERE $__timeFilter(observed_at) ORDER BY observed_at", "refId": "A"}],
-      "title": "Temperature",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {"type": "postgres", "uid": "weather-postgres"},
-      "fieldConfig": {"defaults": {"unit": "velocitymph", "decimals": 1}, "overrides": []},
-      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 12},
-      "id": 10,
-      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}},
-      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT observed_at AS \"time\", wind_speed_mph AS \"Wind speed\", wind_gust_mph AS \"Wind gust\" FROM weather_observation WHERE $__timeFilter(observed_at) ORDER BY observed_at", "refId": "A"}],
-      "title": "Wind Speed / Gust",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {"type": "postgres", "uid": "weather-postgres"},
-      "fieldConfig": {"defaults": {"unit": "degree", "decimals": 0, "min": 0, "max": 360}, "overrides": []},
-      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 20},
-      "id": 11,
-      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
-      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT observed_at AS \"time\", wind_direction_deg AS \"Wind direction\" FROM weather_observation WHERE $__timeFilter(observed_at) ORDER BY observed_at", "refId": "A"}],
-      "title": "Wind Direction",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {"type": "postgres", "uid": "weather-postgres"},
-      "fieldConfig": {"defaults": {"unit": "wattm2", "decimals": 0, "min": 0}, "overrides": []},
-      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 28},
-      "id": 12,
-      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
-      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT observed_at AS \"time\", solar_w_m2 AS \"Solar irradiance\" FROM weather_observation WHERE $__timeFilter(observed_at) ORDER BY observed_at", "refId": "A"}],
-      "title": "Solar Irradiance",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {"type": "postgres", "uid": "weather-postgres"},
       "fieldConfig": {"defaults": {"unit": "suffix:in", "decimals": 2}, "overrides": []},
-      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 36},
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 4},
       "id": 14,
       "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
       "targets": [{"editorMode": "code", "format": "table", "rawQuery": true, "rawSql": "SELECT daily_rain_in AS \"Today\" FROM rain_observation WHERE source = 'wh40' ORDER BY observed_at DESC LIMIT 1", "refId": "A"}],
@@ -140,7 +102,7 @@
     {
       "datasource": {"type": "postgres", "uid": "weather-postgres"},
       "fieldConfig": {"defaults": {"unit": "suffix:in", "decimals": 2}, "overrides": []},
-      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 36},
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 4},
       "id": 15,
       "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
       "targets": [{"editorMode": "code", "format": "table", "rawQuery": true, "rawSql": "SELECT weekly_rain_in AS \"This week\" FROM rain_observation WHERE source = 'wh40' ORDER BY observed_at DESC LIMIT 1", "refId": "A"}],
@@ -150,7 +112,7 @@
     {
       "datasource": {"type": "postgres", "uid": "weather-postgres"},
       "fieldConfig": {"defaults": {"unit": "suffix:in", "decimals": 2}, "overrides": []},
-      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 36},
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 4},
       "id": 16,
       "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
       "targets": [{"editorMode": "code", "format": "table", "rawQuery": true, "rawSql": "SELECT monthly_rain_in AS \"This month\" FROM rain_observation WHERE source = 'wh40' ORDER BY observed_at DESC LIMIT 1", "refId": "A"}],
@@ -160,7 +122,7 @@
     {
       "datasource": {"type": "postgres", "uid": "weather-postgres"},
       "fieldConfig": {"defaults": {"unit": "suffix:in", "decimals": 2}, "overrides": []},
-      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 36},
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 4},
       "id": 17,
       "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
       "targets": [{"editorMode": "code", "format": "table", "rawQuery": true, "rawSql": "SELECT yearly_rain_in AS \"This year\" FROM rain_observation WHERE source = 'wh40' ORDER BY observed_at DESC LIMIT 1", "refId": "A"}],
@@ -169,18 +131,47 @@
     },
     {
       "datasource": {"type": "postgres", "uid": "weather-postgres"},
-      "fieldConfig": {
-        "defaults": {"unit": "suffix:in/hr", "decimals": 2, "min": 0},
-        "overrides": [
-          {
-            "matcher": {"id": "byName", "options": "Total rainfall"},
-            "properties": [
-              {"id": "unit", "value": "suffix:in"},
-              {"id": "custom.axisPlacement", "value": "right"}
-            ]
-          }
-        ]
-      },
+      "fieldConfig": {"defaults": {"unit": "fahrenheit", "decimals": 1}, "overrides": []},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8},
+      "id": 9,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}},
+      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT observed_at AS \"time\", outdoor_temp_f AS \"Outdoor temperature\", feels_like_f AS \"Feels like\", dewpoint_f AS \"Dew point\" FROM weather_observation WHERE $__timeFilter(observed_at) ORDER BY observed_at", "refId": "A"}],
+      "title": "Temperature",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "fieldConfig": {"defaults": {"unit": "velocitymph", "decimals": 1}, "overrides": []},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+      "id": 10,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}},
+      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT observed_at AS \"time\", wind_speed_mph AS \"Wind speed\", wind_gust_mph AS \"Wind gust\" FROM weather_observation WHERE $__timeFilter(observed_at) ORDER BY observed_at", "refId": "A"}],
+      "title": "Wind Speed / Gust",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "fieldConfig": {"defaults": {"unit": "degree", "decimals": 0, "min": 0, "max": 360}, "overrides": []},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 24},
+      "id": 11,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT observed_at AS \"time\", wind_direction_deg AS \"Wind direction\" FROM weather_observation WHERE $__timeFilter(observed_at) ORDER BY observed_at", "refId": "A"}],
+      "title": "Wind Direction",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "fieldConfig": {"defaults": {"unit": "wattm2", "decimals": 0, "min": 0}, "overrides": []},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 32},
+      "id": 12,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT observed_at AS \"time\", solar_w_m2 AS \"Solar irradiance\" FROM weather_observation WHERE $__timeFilter(observed_at) ORDER BY observed_at", "refId": "A"}],
+      "title": "Solar Irradiance",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "fieldConfig": {"defaults": {"unit": "suffix:in/hr", "decimals": 2, "min": 0}, "overrides": [{"matcher": {"id": "byName", "options": "Total rainfall"}, "properties": [{"id": "unit", "value": "suffix:in"}, {"id": "custom.axisPlacement", "value": "right"}]}]},
       "gridPos": {"h": 8, "w": 24, "x": 0, "y": 40},
       "id": 18,
       "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}},
