@@ -1,0 +1,82 @@
+{
+  "annotations": {"list": []},
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "fieldConfig": {"defaults": {"unit": "suffix:in", "decimals": 2, "min": 0}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "id": 1,
+      "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT date_trunc('month', observation_date)::timestamp + INTERVAL '12 hours' AS \"time\", SUM(rainfall_in) AS \"Total rainfall\" FROM daily_weather_summary WHERE $__timeFilter(observation_date::timestamp + INTERVAL '12 hours') GROUP BY 1 ORDER BY 1", "refId": "A"}],
+      "title": "Monthly Rainfall",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "fieldConfig": {"defaults": {"unit": "fahrenheit", "decimals": 1}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "id": 2,
+      "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}},
+      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT date_trunc('month', observation_date)::timestamp + INTERVAL '12 hours' AS \"time\", AVG(high_temp_f) AS \"Average high\", AVG(low_temp_f) AS \"Average low\" FROM daily_weather_summary WHERE $__timeFilter(observation_date::timestamp + INTERVAL '12 hours') GROUP BY 1 ORDER BY 1", "refId": "A"}],
+      "title": "Average Monthly High / Low Temperature",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "fieldConfig": {"defaults": {"unit": "velocitymph", "decimals": 1, "min": 0}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "id": 3,
+      "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT date_trunc('month', observation_date)::timestamp + INTERVAL '12 hours' AS \"time\", MAX(peak_gust_mph) AS \"Maximum gust\" FROM daily_weather_summary WHERE $__timeFilter(observation_date::timestamp + INTERVAL '12 hours') GROUP BY 1 ORDER BY 1", "refId": "A"}],
+      "title": "Monthly Maximum Wind Gust",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "fieldConfig": {"defaults": {"unit": "short", "decimals": 0, "min": 0}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "id": 4,
+      "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT date_trunc('month', observation_date)::timestamp + INTERVAL '12 hours' AS \"time\", COUNT(*) FILTER (WHERE rainfall_in > 0)::double precision AS \"Rainy days\" FROM daily_weather_summary WHERE $__timeFilter(observation_date::timestamp + INTERVAL '12 hours') GROUP BY 1 ORDER BY 1", "refId": "A"}],
+      "title": "Rainy Days per Month",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "fieldConfig": {"defaults": {"unit": "suffix:in", "decimals": 2, "min": 0}, "overrides": []},
+      "gridPos": {"h": 9, "w": 24, "x": 0, "y": 16},
+      "id": 5,
+      "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}, "orientation": "auto", "showValue": "auto", "stacking": "none", "xTickLabelRotation": 0, "xTickLabelSpacing": 0},
+      "targets": [{"editorMode": "code", "format": "table", "rawQuery": true, "rawSql": "WITH months AS (SELECT generate_series(1, 12) AS month_num), totals AS (SELECT EXTRACT(MONTH FROM observation_date)::int AS month_num, SUM(rainfall_in) FILTER (WHERE EXTRACT(YEAR FROM observation_date) = EXTRACT(YEAR FROM CURRENT_DATE)) AS current_year, SUM(rainfall_in) FILTER (WHERE EXTRACT(YEAR FROM observation_date) = EXTRACT(YEAR FROM CURRENT_DATE) - 1) AS previous_year FROM daily_weather_summary WHERE observation_date >= date_trunc('year', CURRENT_DATE) - INTERVAL '1 year' AND observation_date < date_trunc('year', CURRENT_DATE) + INTERVAL '1 year' GROUP BY 1) SELECT to_char(make_date(2000, months.month_num, 1), 'Mon') AS \"Month\", totals.current_year AS \"Current year\", totals.previous_year AS \"Previous year\" FROM months LEFT JOIN totals USING (month_num) ORDER BY months.month_num", "refId": "A"}],
+      "title": "Year-over-Year Monthly Rainfall",
+      "type": "barchart"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "fieldConfig": {"defaults": {"unit": "fahrenheit", "decimals": 1}, "overrides": []},
+      "gridPos": {"h": 9, "w": 24, "x": 0, "y": 25},
+      "id": 6,
+      "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}, "orientation": "auto", "showValue": "auto", "stacking": "none", "xTickLabelRotation": 0, "xTickLabelSpacing": 0},
+      "targets": [{"editorMode": "code", "format": "table", "rawQuery": true, "rawSql": "WITH months AS (SELECT generate_series(1, 12) AS month_num), temps AS (SELECT EXTRACT(MONTH FROM observation_date)::int AS month_num, AVG(high_temp_f) FILTER (WHERE EXTRACT(YEAR FROM observation_date) = EXTRACT(YEAR FROM CURRENT_DATE)) AS current_high, AVG(high_temp_f) FILTER (WHERE EXTRACT(YEAR FROM observation_date) = EXTRACT(YEAR FROM CURRENT_DATE) - 1) AS previous_high, AVG(low_temp_f) FILTER (WHERE EXTRACT(YEAR FROM observation_date) = EXTRACT(YEAR FROM CURRENT_DATE)) AS current_low, AVG(low_temp_f) FILTER (WHERE EXTRACT(YEAR FROM observation_date) = EXTRACT(YEAR FROM CURRENT_DATE) - 1) AS previous_low FROM daily_weather_summary WHERE observation_date >= date_trunc('year', CURRENT_DATE) - INTERVAL '1 year' AND observation_date < date_trunc('year', CURRENT_DATE) + INTERVAL '1 year' GROUP BY 1) SELECT to_char(make_date(2000, months.month_num, 1), 'Mon') AS \"Month\", temps.current_high AS \"Current-year high\", temps.previous_high AS \"Previous-year high\", temps.current_low AS \"Current-year low\", temps.previous_low AS \"Previous-year low\" FROM months LEFT JOIN temps USING (month_num) ORDER BY months.month_num", "refId": "A"}],
+      "title": "Year-over-Year Monthly Temperature",
+      "type": "barchart"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 39,
+  "tags": ["ecowitt", "weather", "monthly"],
+  "templating": {"list": []},
+  "time": {"from": "now-2y", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Monthly History",
+  "uid": "ecowitt-monthly-history",
+  "version": 1,
+  "weekStart": ""
+}
