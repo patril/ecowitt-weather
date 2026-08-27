@@ -64,7 +64,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-weather}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-weather}
 
   grafana:
-    image: grafana/grafana:latest
+    build:
+      context: ./grafana
     container_name: ecowitt-grafana
     restart: unless-stopped
     depends_on:
