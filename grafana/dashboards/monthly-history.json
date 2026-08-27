@@ -9,7 +9,7 @@
   "panels": [
     {
       "datasource": {"type": "postgres", "uid": "weather-postgres"},
-      "fieldConfig": {"defaults": {"unit": "suffix:in", "decimals": 2, "min": 0}, "overrides": []},
+      "fieldConfig": {"defaults": {"unit": "suffix: in", "decimals": 2, "min": 0}, "overrides": []},
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
       "id": 1,
       "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
@@ -19,7 +19,7 @@
     },
     {
       "datasource": {"type": "postgres", "uid": "weather-postgres"},
-      "fieldConfig": {"defaults": {"unit": "fahrenheit", "decimals": 1}, "overrides": []},
+      "fieldConfig": {"defaults": {"unit": "suffix: °F", "decimals": 1}, "overrides": []},
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
       "id": 2,
       "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}},
@@ -29,7 +29,7 @@
     },
     {
       "datasource": {"type": "postgres", "uid": "weather-postgres"},
-      "fieldConfig": {"defaults": {"unit": "velocitymph", "decimals": 1, "min": 0}, "overrides": []},
+      "fieldConfig": {"defaults": {"unit": "suffix: mph", "decimals": 1, "min": 0}, "overrides": []},
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
       "id": 3,
       "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
@@ -59,7 +59,7 @@
     },
     {
       "datasource": {"type": "postgres", "uid": "weather-postgres"},
-      "fieldConfig": {"defaults": {"unit": "suffix:in", "decimals": 2, "min": 0}, "overrides": []},
+      "fieldConfig": {"defaults": {"unit": "suffix: in", "decimals": 2, "min": 0}, "overrides": []},
       "gridPos": {"h": 9, "w": 24, "x": 0, "y": 24},
       "id": 5,
       "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}, "orientation": "auto", "showValue": "auto", "stacking": "none", "xTickLabelRotation": 0, "xTickLabelSpacing": 0},
@@ -69,7 +69,7 @@
     },
     {
       "datasource": {"type": "postgres", "uid": "weather-postgres"},
-      "fieldConfig": {"defaults": {"unit": "fahrenheit", "decimals": 1}, "overrides": []},
+      "fieldConfig": {"defaults": {"unit": "suffix: °F", "decimals": 1}, "overrides": []},
       "gridPos": {"h": 9, "w": 24, "x": 0, "y": 33},
       "id": 6,
       "options": {"legend": {"displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}, "orientation": "auto", "showValue": "auto", "stacking": "none", "xTickLabelRotation": 0, "xTickLabelSpacing": 0},
