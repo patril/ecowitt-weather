@@ -10,7 +10,7 @@
     {
       "datasource": {"type": "postgres", "uid": "weather-postgres"},
       "fieldConfig": {
-        "defaults": {"unit": "kwatth", "decimals": 2, "min": 0},
+        "defaults": {"unit": "suffix: kWh/m²", "decimals": 2, "min": 0, "custom": {"axisLabel": "Solar energy (kWh/m²)"}},
         "overrides": [
           {
             "matcher": {"id": "byName", "options": "Incomplete"},
