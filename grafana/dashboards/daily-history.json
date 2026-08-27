@@ -1,0 +1,92 @@
+{
+  "annotations": {"list": []},
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "fieldConfig": {"defaults": {"unit": "fahrenheit", "decimals": 1}, "overrides": []},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+      "id": 1,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}},
+      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT observation_date::timestamp + INTERVAL '12 hours' AS \"time\", high_temp_f AS \"High temperature\", low_temp_f AS \"Low temperature\", mean_dewpoint_f AS \"Mean dew point\" FROM daily_weather_summary WHERE $__timeFilter(observation_date::timestamp + INTERVAL '12 hours') ORDER BY observation_date", "refId": "A"}],
+      "title": "Daily Temperature / Dew Point",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "fieldConfig": {"defaults": {"unit": "suffix:in", "decimals": 2, "min": 0}, "overrides": []},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8},
+      "id": 2,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT observation_date::timestamp + INTERVAL '12 hours' AS \"time\", rainfall_in AS \"Rainfall\" FROM daily_weather_summary WHERE $__timeFilter(observation_date::timestamp + INTERVAL '12 hours') ORDER BY observation_date", "refId": "A"}],
+      "title": "Daily Rainfall",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "fieldConfig": {"defaults": {"unit": "velocitymph", "decimals": 1, "min": 0}, "overrides": []},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+      "id": 3,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}},
+      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT observation_date::timestamp + INTERVAL '12 hours' AS \"time\", peak_gust_mph AS \"Peak gust\", mean_wind_mph AS \"Mean wind\" FROM daily_weather_summary WHERE $__timeFilter(observation_date::timestamp + INTERVAL '12 hours') ORDER BY observation_date", "refId": "A"}],
+      "title": "Daily Wind",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "fieldConfig": {"defaults": {"unit": "wattm2", "decimals": 0, "min": 0}, "overrides": []},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 24},
+      "id": 4,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT observation_date::timestamp + INTERVAL '12 hours' AS \"time\", peak_irradiance_w_m2 AS \"Peak irradiance\" FROM daily_weather_summary WHERE $__timeFilter(observation_date::timestamp + INTERVAL '12 hours') ORDER BY observation_date", "refId": "A"}],
+      "title": "Daily Peak Solar Irradiance",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "fieldConfig": {"defaults": {"unit": "pressureinhg", "decimals": 3}, "overrides": []},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 32},
+      "id": 5,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT observation_date::timestamp + INTERVAL '12 hours' AS \"time\", mean_relative_pressure_inhg AS \"Mean relative pressure\" FROM daily_weather_summary WHERE $__timeFilter(observation_date::timestamp + INTERVAL '12 hours') ORDER BY observation_date", "refId": "A"}],
+      "title": "Daily Mean Relative Pressure",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "fieldConfig": {"defaults": {"decimals": 0, "min": 0}, "overrides": []},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 40},
+      "id": 6,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT observation_date::timestamp + INTERVAL '12 hours' AS \"time\", lightning_strikes AS \"Lightning strikes\" FROM daily_weather_summary WHERE $__timeFilter(observation_date::timestamp + INTERVAL '12 hours') ORDER BY observation_date", "refId": "A"}],
+      "title": "Daily Lightning Strikes",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "fieldConfig": {"defaults": {"decimals": 0, "min": 0}, "overrides": []},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 48},
+      "id": 7,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "targets": [{"editorMode": "code", "format": "time_series", "rawQuery": true, "rawSql": "SELECT observation_date::timestamp + INTERVAL '12 hours' AS \"time\", sample_count AS \"Weather observations\" FROM daily_weather_summary WHERE $__timeFilter(observation_date::timestamp + INTERVAL '12 hours') ORDER BY observation_date", "refId": "A"}],
+      "title": "Daily Observation Count",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "5m",
+  "schemaVersion": 39,
+  "tags": ["ecowitt", "weather", "history"],
+  "templating": {"list": []},
+  "time": {"from": "now-1y", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Daily History",
+  "uid": "ecowitt-daily-history",
+  "version": 1,
+  "weekStart": ""
+}
