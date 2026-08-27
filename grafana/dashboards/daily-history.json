@@ -9,7 +9,7 @@
   "panels": [
     {
       "datasource": {"type": "postgres", "uid": "weather-postgres"},
-      "fieldConfig": {"defaults": {"unit": "fahrenheit", "decimals": 1}, "overrides": []},
+      "fieldConfig": {"defaults": {"unit": "suffix: °F", "decimals": 1}, "overrides": []},
       "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
       "id": 1,
       "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}},
@@ -19,7 +19,7 @@
     },
     {
       "datasource": {"type": "postgres", "uid": "weather-postgres"},
-      "fieldConfig": {"defaults": {"unit": "suffix:in", "decimals": 2, "min": 0}, "overrides": []},
+      "fieldConfig": {"defaults": {"unit": "suffix: in", "decimals": 2, "min": 0}, "overrides": []},
       "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8},
       "id": 2,
       "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
@@ -29,7 +29,7 @@
     },
     {
       "datasource": {"type": "postgres", "uid": "weather-postgres"},
-      "fieldConfig": {"defaults": {"unit": "velocitymph", "decimals": 1, "min": 0}, "overrides": []},
+      "fieldConfig": {"defaults": {"unit": "suffix: mph", "decimals": 1, "min": 0}, "overrides": []},
       "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
       "id": 3,
       "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}},
@@ -39,7 +39,7 @@
     },
     {
       "datasource": {"type": "postgres", "uid": "weather-postgres"},
-      "fieldConfig": {"defaults": {"unit": "wattm2", "decimals": 0, "min": 0}, "overrides": []},
+      "fieldConfig": {"defaults": {"unit": "suffix: W/m²", "decimals": 0, "min": 0, "custom": {"axisLabel": "Irradiance (W/m²)"}}, "overrides": []},
       "gridPos": {"h": 8, "w": 24, "x": 0, "y": 24},
       "id": 4,
       "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
@@ -49,7 +49,7 @@
     },
     {
       "datasource": {"type": "postgres", "uid": "weather-postgres"},
-      "fieldConfig": {"defaults": {"unit": "pressureinhg", "decimals": 3}, "overrides": []},
+      "fieldConfig": {"defaults": {"unit": "suffix: inHg", "decimals": 3, "custom": {"axisLabel": "Pressure (inHg)"}}, "overrides": []},
       "gridPos": {"h": 8, "w": 24, "x": 0, "y": 32},
       "id": 5,
       "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
