@@ -71,6 +71,71 @@
       ],
       "title": "Temperature vs Irradiance",
       "type": "xychart"
+    },
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "description": "One point per station-local calendar day over the last year. Dry days are included. X is the most negative rolling 3-hour relative-pressure change observed that day; Y is total daily rainfall.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 35,
+            "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+            "pointSize": {"fixed": 5},
+            "scaleDistribution": {"type": "linear"},
+            "show": "points"
+          },
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Largest pressure drop"},
+            "properties": [
+              {"id": "unit", "value": "pressureinhg"},
+              {"id": "decimals", "value": 3}
+            ]
+          },
+          {
+            "matcher": {"id": "byName", "options": "Rainfall"},
+            "properties": [
+              {"id": "unit", "value": "suffix:in"},
+              {"id": "decimals", "value": 2}
+            ]
+          }
+        ]
+      },
+      "gridPos": {"h": 16, "w": 24, "x": 0, "y": 16},
+      "id": 2,
+      "options": {
+        "dims": {"x": "Largest pressure drop"},
+        "legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": false},
+        "series": [
+          {
+            "pointColor": {},
+            "x": "Largest pressure drop",
+            "y": "Rainfall"
+          }
+        ],
+        "seriesMapping": "manual",
+        "tooltip": {"mode": "single", "sort": "none"}
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH pressure_change AS (SELECT current.observed_at, current.relative_pressure_inhg - previous.relative_pressure_inhg AS change_inhg FROM weather_observation current JOIN LATERAL (SELECT relative_pressure_inhg FROM weather_observation previous WHERE previous.observed_at <= current.observed_at - INTERVAL '3 hours' AND previous.relative_pressure_inhg IS NOT NULL ORDER BY previous.observed_at DESC LIMIT 1) previous ON TRUE WHERE current.observed_at >= NOW() - INTERVAL '1 year' AND current.relative_pressure_inhg IS NOT NULL), daily_pressure AS (SELECT (observed_at AT TIME ZONE 'America/New_York')::date AS observation_date, MIN(change_inhg) AS largest_drop_inhg FROM pressure_change GROUP BY 1) SELECT daily_pressure.largest_drop_inhg AS \"Largest pressure drop\", daily_weather_summary.rainfall_in AS \"Rainfall\" FROM daily_pressure JOIN daily_weather_summary USING (observation_date) WHERE daily_weather_summary.observation_date >= CURRENT_DATE - INTERVAL '1 year' ORDER BY daily_weather_summary.observation_date",
+          "refId": "A"
+        }
+      ],
+      "title": "Daily Rainfall vs Largest 3-Hour Pressure Drop",
+      "type": "xychart"
     }
   ],
   "refresh": "",
