@@ -1,0 +1,87 @@
+{
+  "annotations": {"list": []},
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "description": "Five-minute average daylight observations. Irradiance is plotted on the x-axis and outdoor temperature on the y-axis.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 35,
+            "hideFrom": {"legend": false, "tooltip": false, "viz": false},
+            "pointSize": {"fixed": 4},
+            "scaleDistribution": {"type": "linear"},
+            "show": "points"
+          },
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Irradiance"},
+            "properties": [
+              {"id": "unit", "value": "wattm2"},
+              {"id": "decimals", "value": 0}
+            ]
+          },
+          {
+            "matcher": {"id": "byName", "options": "Temperature"},
+            "properties": [
+              {"id": "unit", "value": "fahrenheit"},
+              {"id": "decimals", "value": 1}
+            ]
+          }
+        ]
+      },
+      "gridPos": {"h": 16, "w": 24, "x": 0, "y": 0},
+      "id": 1,
+      "options": {
+        "dims": {"x": "Irradiance"},
+        "legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": false},
+        "series": [
+          {
+            "pointColor": {},
+            "x": "Irradiance",
+            "y": "Temperature"
+          }
+        ],
+        "seriesMapping": "manual",
+        "tooltip": {"mode": "single", "sort": "none"}
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH buckets AS (SELECT floor(extract(epoch FROM observed_at) / 300) AS bucket, AVG(solar_w_m2) AS irradiance, AVG(outdoor_temp_f) AS temperature FROM weather_observation WHERE $__timeFilter(observed_at) AND solar_w_m2 > 10 AND outdoor_temp_f IS NOT NULL GROUP BY 1) SELECT irradiance AS \"Irradiance\", temperature AS \"Temperature\" FROM buckets ORDER BY bucket",
+          "refId": "A"
+        }
+      ],
+      "title": "Temperature vs Irradiance",
+      "type": "xychart"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 39,
+  "tags": ["ecowitt", "weather", "trends"],
+  "templating": {"list": []},
+  "time": {"from": "now-7d", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Trends",
+  "uid": "ecowitt-trends",
+  "version": 1,
+  "weekStart": ""
+}
