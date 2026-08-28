@@ -1,0 +1,55 @@
+{
+  "annotations": {"list": []},
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {"type": "postgres", "uid": "weather-postgres"},
+      "fieldConfig": {
+        "defaults": {"unit": "suffix: kWh/m²", "decimals": 3, "min": 0, "custom": {"axisLabel": "Wind energy (kWh/m²)"}},
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Incomplete"},
+            "properties": [
+              {"id": "custom.drawStyle", "value": "points"},
+              {"id": "custom.showPoints", "value": "always"},
+              {"id": "custom.pointSize", "value": 8},
+              {"id": "custom.lineWidth", "value": 0},
+              {"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}
+            ]
+          }
+        ]
+      },
+      "gridPos": {"h": 12, "w": 24, "x": 0, "y": 0},
+      "id": 1,
+      "options": {"legend": {"calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "none"}},
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT observation_date::timestamp + INTERVAL '12 hours' AS \"time\", CASE WHEN is_complete THEN energy_wh_m2 / 1000.0 END AS \"Complete\", CASE WHEN NOT is_complete THEN energy_wh_m2 / 1000.0 END AS \"Incomplete\" FROM daily_wind_energy WHERE $__timeFilter(observation_date::timestamp + INTERVAL '12 hours') ORDER BY observation_date",
+          "refId": "A"
+        }
+      ],
+      "title": "Daily Potential Wind Energy (kWh/m²)",
+      "description": "Integrated available wind energy crossing one square meter, using P/A = ½ρv³ and ρ = 1.225 kg/m³ by default. This is available kinetic energy, not turbine output.",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["ecowitt", "weather", "wind"],
+  "templating": {"list": []},
+  "time": {"from": "now-1y", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Wind Energy History",
+  "uid": "ecowitt-wind-energy-history",
+  "version": 1,
+  "weekStart": ""
+}
