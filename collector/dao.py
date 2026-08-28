@@ -59,16 +59,29 @@ def get_wind_speed_readings(observation_date: date) -> list[WindSpeedReading]:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT observed_at, wind_speed_mph
+                SELECT observed_at, wind_speed_mph, outdoor_temp_f,
+                       outdoor_humidity_pct, absolute_pressure_inhg
                 FROM weather_observation
                 WHERE observed_at >= %s
                   AND observed_at < %s
                   AND wind_speed_mph IS NOT NULL
+                  AND outdoor_temp_f IS NOT NULL
+                  AND outdoor_humidity_pct IS NOT NULL
+                  AND absolute_pressure_inhg IS NOT NULL
                 ORDER BY observed_at ASC
                 """,
                 (start, end),
             )
-            return [WindSpeedReading(observed_at=row[0], wind_speed_mph=row[1]) for row in cur.fetchall()]
+            return [
+                WindSpeedReading(
+                    observed_at=row[0],
+                    wind_speed_mph=row[1],
+                    outdoor_temp_f=row[2],
+                    outdoor_humidity_pct=row[3],
+                    absolute_pressure_inhg=row[4],
+                )
+                for row in cur.fetchall()
+            ]
 
 
 def upsert_daily_solar_energy(result: DailyEnergyResult) -> None:
@@ -106,12 +119,12 @@ def upsert_daily_wind_energy(result: DailyWindEnergyResult) -> None:
             cur.execute(
                 """
                 INSERT INTO daily_wind_energy (
-                    observation_date, energy_wh_m2, air_density_kg_m3, sample_count,
-                    gap_count, max_gap_seconds, is_complete, calculated_at
+                    observation_date, energy_wh_m2, mean_air_density_kg_m3,
+                    sample_count, gap_count, max_gap_seconds, is_complete, calculated_at
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
                 ON CONFLICT (observation_date) DO UPDATE SET
                     energy_wh_m2 = EXCLUDED.energy_wh_m2,
-                    air_density_kg_m3 = EXCLUDED.air_density_kg_m3,
+                    mean_air_density_kg_m3 = EXCLUDED.mean_air_density_kg_m3,
                     sample_count = EXCLUDED.sample_count,
                     gap_count = EXCLUDED.gap_count,
                     max_gap_seconds = EXCLUDED.max_gap_seconds,
@@ -121,7 +134,7 @@ def upsert_daily_wind_energy(result: DailyWindEnergyResult) -> None:
                 (
                     result.observation_date,
                     result.energy_wh_m2,
-                    result.air_density_kg_m3,
+                    result.mean_air_density_kg_m3,
                     result.sample_count,
                     result.gap_count,
                     result.max_gap_seconds,

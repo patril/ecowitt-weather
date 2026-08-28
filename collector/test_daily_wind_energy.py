@@ -5,18 +5,33 @@ from unittest.mock import patch
 
 os.environ.setdefault("DATABASE_URL", "postgresql://unused")
 
-from daily_wind_energy import DailyWindEnergy, MPH_TO_MPS
+from daily_wind_energy import (
+    DailyWindEnergy,
+    DRY_AIR_GAS_CONSTANT,
+    INHG_TO_PA,
+    MPH_TO_MPS,
+)
 from dto.WindSpeedReading import WindSpeedReading
 
 
-def reading(hour: int, minute: int, wind_speed_mph: float) -> WindSpeedReading:
+def reading(
+    hour: int,
+    minute: int,
+    wind_speed_mph: float,
+    temp_f: float = 59.0,
+    humidity_pct: float = 0.0,
+    pressure_inhg: float = 29.92,
+) -> WindSpeedReading:
     return WindSpeedReading(
         observed_at=datetime(2026, 8, 25, hour, minute, tzinfo=timezone.utc),
         wind_speed_mph=wind_speed_mph,
+        outdoor_temp_f=temp_f,
+        outdoor_humidity_pct=humidity_pct,
+        absolute_pressure_inhg=pressure_inhg,
     )
 
 
-def calculate(readings, max_gap_seconds=3600, air_density_kg_m3=1.225):
+def calculate(readings, max_gap_seconds=3600):
     start = readings[0].observed_at if readings else datetime(2026, 8, 25, tzinfo=timezone.utc)
     end = readings[-1].observed_at if readings else start + timedelta(days=1)
     with patch("daily_wind_energy.get_wind_speed_readings", return_value=readings), patch(
@@ -25,24 +40,44 @@ def calculate(readings, max_gap_seconds=3600, air_density_kg_m3=1.225):
         return DailyWindEnergy(
             date(2026, 8, 25),
             max_gap_seconds=max_gap_seconds,
-            air_density_kg_m3=air_density_kg_m3,
         ).calculate()
 
 
 class DailyWindEnergyTests(unittest.TestCase):
+    def test_dry_air_density_uses_absolute_pressure_and_temperature(self):
+        sample = reading(12, 0, 10, temp_f=59.0, humidity_pct=0.0, pressure_inhg=29.92)
+        density = DailyWindEnergy._air_density_kg_m3(sample)
+        expected = (29.92 * INHG_TO_PA) / (DRY_AIR_GAS_CONSTANT * 288.15)
+
+        self.assertAlmostEqual(density, expected, places=6)
+
+    def test_lower_station_pressure_reduces_air_density(self):
+        sea_level = DailyWindEnergy._air_density_kg_m3(reading(12, 0, 10, pressure_inhg=29.92))
+        mountain = DailyWindEnergy._air_density_kg_m3(reading(12, 0, 10, pressure_inhg=24.90))
+
+        self.assertLess(mountain, sea_level)
+
+    def test_humidity_reduces_air_density_at_same_temperature_and_pressure(self):
+        dry = DailyWindEnergy._air_density_kg_m3(reading(12, 0, 10, humidity_pct=0.0))
+        humid = DailyWindEnergy._air_density_kg_m3(reading(12, 0, 10, humidity_pct=90.0))
+
+        self.assertLess(humid, dry)
+
     def test_constant_wind_integrates_power_density_over_time(self):
-        speed_mph = 10.0
-        result = calculate([reading(12, 0, speed_mph), reading(13, 0, speed_mph)])
-        speed_m_s = speed_mph * MPH_TO_MPS
-        expected = 0.5 * 1.225 * speed_m_s ** 3
+        samples = [reading(12, 0, 10), reading(13, 0, 10)]
+        result = calculate(samples)
+        density = DailyWindEnergy._air_density_kg_m3(samples[0])
+        expected = 0.5 * density * (10 * MPH_TO_MPS) ** 3
 
         self.assertAlmostEqual(result.energy_wh_m2, expected)
-        self.assertAlmostEqual(result.energy_kwh_m2, expected / 1000.0)
+        self.assertAlmostEqual(result.mean_air_density_kg_m3, density)
         self.assertTrue(result.is_complete)
 
-    def test_trapezoid_is_applied_to_power_density_not_wind_speed(self):
-        result = calculate([reading(12, 0, 0), reading(13, 0, 10)])
-        endpoint_power = 0.5 * 1.225 * (10 * MPH_TO_MPS) ** 3
+    def test_trapezoid_uses_each_endpoints_power_density(self):
+        first = reading(12, 0, 0, pressure_inhg=29.92)
+        second = reading(13, 0, 10, pressure_inhg=24.90)
+        result = calculate([first, second])
+        endpoint_power = 0.5 * DailyWindEnergy._air_density_kg_m3(second) * (10 * MPH_TO_MPS) ** 3
 
         self.assertAlmostEqual(result.energy_wh_m2, endpoint_power / 2.0)
 
@@ -58,8 +93,12 @@ class DailyWindEnergyTests(unittest.TestCase):
         self.assertFalse(result.is_complete)
 
     def test_empty_and_single_reading_days_are_incomplete(self):
-        self.assertFalse(calculate([]).is_complete)
-        self.assertFalse(calculate([reading(12, 0, 10)]).is_complete)
+        empty = calculate([])
+        single = calculate([reading(12, 0, 10)])
+
+        self.assertFalse(empty.is_complete)
+        self.assertIsNone(empty.mean_air_density_kg_m3)
+        self.assertFalse(single.is_complete)
 
 
 if __name__ == "__main__":
