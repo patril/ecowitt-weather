@@ -8,7 +8,9 @@ import psycopg
 
 if TYPE_CHECKING:
     from daily_energy import DailyEnergyResult
+    from daily_wind_energy import DailyWindEnergyResult
     from dto.IrradianceReading import IrradianceReading
+    from dto.WindSpeedReading import WindSpeedReading
 
 DATABASE_URL = os.environ["DATABASE_URL"]
 STATION_TIMEZONE = ZoneInfo(os.environ.get("STATION_TIMEZONE", "America/New_York"))
@@ -45,10 +47,28 @@ def get_irradiance_readings(observation_date: date) -> list[IrradianceReading]:
                 """,
                 (start, end),
             )
-            return [
-                IrradianceReading(observed_at=row[0], irradiance=row[1])
-                for row in cur.fetchall()
-            ]
+            return [IrradianceReading(observed_at=row[0], irradiance=row[1]) for row in cur.fetchall()]
+
+
+def get_wind_speed_readings(observation_date: date) -> list[WindSpeedReading]:
+    from dto.WindSpeedReading import WindSpeedReading
+
+    start, end = station_day_bounds(observation_date)
+
+    with psycopg.connect(DATABASE_URL) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT observed_at, wind_speed_mph
+                FROM weather_observation
+                WHERE observed_at >= %s
+                  AND observed_at < %s
+                  AND wind_speed_mph IS NOT NULL
+                ORDER BY observed_at ASC
+                """,
+                (start, end),
+            )
+            return [WindSpeedReading(observed_at=row[0], wind_speed_mph=row[1]) for row in cur.fetchall()]
 
 
 def upsert_daily_solar_energy(result: DailyEnergyResult) -> None:
@@ -71,6 +91,37 @@ def upsert_daily_solar_energy(result: DailyEnergyResult) -> None:
                 (
                     result.observation_date,
                     result.energy_wh_m2,
+                    result.sample_count,
+                    result.gap_count,
+                    result.max_gap_seconds,
+                    result.is_complete,
+                ),
+            )
+        conn.commit()
+
+
+def upsert_daily_wind_energy(result: DailyWindEnergyResult) -> None:
+    with psycopg.connect(DATABASE_URL) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO daily_wind_energy (
+                    observation_date, energy_wh_m2, air_density_kg_m3, sample_count,
+                    gap_count, max_gap_seconds, is_complete, calculated_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, NOW())
+                ON CONFLICT (observation_date) DO UPDATE SET
+                    energy_wh_m2 = EXCLUDED.energy_wh_m2,
+                    air_density_kg_m3 = EXCLUDED.air_density_kg_m3,
+                    sample_count = EXCLUDED.sample_count,
+                    gap_count = EXCLUDED.gap_count,
+                    max_gap_seconds = EXCLUDED.max_gap_seconds,
+                    is_complete = EXCLUDED.is_complete,
+                    calculated_at = NOW()
+                """,
+                (
+                    result.observation_date,
+                    result.energy_wh_m2,
+                    result.air_density_kg_m3,
                     result.sample_count,
                     result.gap_count,
                     result.max_gap_seconds,
