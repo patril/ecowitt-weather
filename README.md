@@ -127,6 +127,21 @@ docker compose version
 sudo systemctl status docker
 ```
 
+Enable Docker to start automatically whenever the Pi boots:
+
+```bash
+sudo systemctl enable --now docker
+```
+
+Verify both the boot setting and current state:
+
+```bash
+systemctl is-enabled docker
+systemctl is-active docker
+```
+
+Both commands should report success (`enabled` and `active`).
+
 If you choose to run Docker without `sudo`, add your user to the `docker` group and log out/back in:
 
 ```bash
@@ -225,6 +240,30 @@ docker compose ps
 
 You should see PostgreSQL, the collector, Grafana, nginx, the mock service, and the daily-energy scheduler.
 The mock remains running but is ignored when `USE_MOCK_GW3000=false`.
+
+All long-running services in `docker-compose.yml` use `restart: unless-stopped`. Once the stack has
+been created by `./scripts/start.sh`, Docker remembers the containers and automatically restarts them
+when the Docker daemon starts after a Pi reboot. There is no separate systemd unit or boot-time
+`docker compose up` command required for the Compose project.
+
+This also means an intentional `docker stop` is respected. To remove the containers entirely, use
+`docker compose down`; after that, run `./scripts/start.sh` again to recreate the project before
+expecting it to return on later reboots.
+
+Test the complete boot path once after initial setup:
+
+```bash
+sudo reboot
+```
+
+After reconnecting to the Pi:
+
+```bash
+systemctl is-active docker
+docker compose ps
+```
+
+Docker should be active and the weather services should be running without manually starting Compose.
 
 Useful logs:
 
