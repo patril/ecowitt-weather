@@ -1,3 +1,5 @@
+# Long-running services use `restart: unless-stopped` so Docker restores the
+# weather stack automatically when the Docker daemon starts after a Pi reboot.
 services:
   postgres:
     image: postgres:16
