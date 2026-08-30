@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from daily_wind_energy import DailyWindEnergyResult
     from dto.IrradianceReading import IrradianceReading
     from dto.WindSpeedReading import WindSpeedReading
+    from sky_condition import SkyConditionResult
 
 DATABASE_URL = os.environ["DATABASE_URL"]
 STATION_TIMEZONE = ZoneInfo(os.environ.get("STATION_TIMEZONE", "America/New_York"))
@@ -46,6 +47,26 @@ def get_irradiance_readings(observation_date: date) -> list[IrradianceReading]:
                 ORDER BY observed_at ASC
                 """,
                 (start, end),
+            )
+            return [IrradianceReading(observed_at=row[0], irradiance=row[1]) for row in cur.fetchall()]
+
+
+def get_recent_irradiance_readings(observed_at: datetime, minutes: int = 5) -> list[IrradianceReading]:
+    from dto.IrradianceReading import IrradianceReading
+
+    start = observed_at - timedelta(minutes=minutes)
+    with psycopg.connect(DATABASE_URL) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT observed_at, solar_w_m2
+                FROM weather_observation
+                WHERE observed_at >= %s
+                  AND observed_at <= %s
+                  AND solar_w_m2 IS NOT NULL
+                ORDER BY observed_at ASC
+                """,
+                (start, observed_at),
             )
             return [IrradianceReading(observed_at=row[0], irradiance=row[1]) for row in cur.fetchall()]
 
@@ -139,6 +160,31 @@ def upsert_daily_wind_energy(result: DailyWindEnergyResult) -> None:
                     result.gap_count,
                     result.max_gap_seconds,
                     result.is_complete,
+                ),
+            )
+        conn.commit()
+
+
+def insert_sky_condition(result: SkyConditionResult) -> None:
+    with psycopg.connect(DATABASE_URL) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO sky_condition_observation (
+                    observed_at, condition, clear_sky_index, variability, clear_sky_w_m2
+                ) VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (observed_at) DO UPDATE SET
+                    condition = EXCLUDED.condition,
+                    clear_sky_index = EXCLUDED.clear_sky_index,
+                    variability = EXCLUDED.variability,
+                    clear_sky_w_m2 = EXCLUDED.clear_sky_w_m2
+                """,
+                (
+                    result.observed_at,
+                    result.condition,
+                    result.clear_sky_index,
+                    result.variability,
+                    result.clear_sky_w_m2,
                 ),
             )
         conn.commit()
