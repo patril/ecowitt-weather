@@ -5,13 +5,22 @@ from datetime import datetime, timezone
 
 import requests
 
-from dao import insert_lightning, insert_rain, insert_weather
+from dao import (
+    get_recent_irradiance_readings,
+    insert_lightning,
+    insert_rain,
+    insert_sky_condition,
+    insert_weather,
+)
+from sky_condition import estimate_sky_condition
 
 USE_MOCK_GW3000 = os.environ.get("USE_MOCK_GW3000", "false").strip().lower() in {"1", "true", "yes", "on"}
 ECOWITT_REAL_URL = os.environ.get("ECOWITT_REAL_URL", "http://192.168.4.131/get_livedata_info")
 MOCK_GW3000_URL = os.environ.get("MOCK_GW3000_URL", "http://mock-gw3000:8080/get_livedata_info")
 ECOWITT_URL = MOCK_GW3000_URL if USE_MOCK_GW3000 else ECOWITT_REAL_URL
 POLL_SECONDS = int(os.environ.get("POLL_SECONDS", "30"))
+STATION_LATITUDE = float(os.environ["STATION_LATITUDE"]) if os.environ.get("STATION_LATITUDE") else None
+STATION_LONGITUDE = float(os.environ["STATION_LONGITUDE"]) if os.environ.get("STATION_LONGITUDE") else None
 
 
 def first_number(value):
@@ -125,6 +134,15 @@ def collect_once():
     lightning = parse_lightning(payload, observed_at)
 
     insert_weather(weather)
+    sky_condition = estimate_sky_condition(
+        observed_at=observed_at,
+        irradiance=weather["solar_w_m2"],
+        recent_readings=get_recent_irradiance_readings(observed_at),
+        latitude=STATION_LATITUDE,
+        longitude=STATION_LONGITUDE,
+    )
+    insert_sky_condition(sky_condition)
+
     if payload.get("rain"):
         insert_rain(rain_wh40)
     if payload.get("piezoRain"):
@@ -133,7 +151,8 @@ def collect_once():
 
     print(
         f"Stored observation {observed_at.isoformat()} "
-        f"temp={weather['outdoor_temp_f']}F solar={weather['solar_w_m2']}W/m2",
+        f"temp={weather['outdoor_temp_f']}F solar={weather['solar_w_m2']}W/m2 "
+        f"sky={sky_condition.condition}",
         flush=True,
     )
 
