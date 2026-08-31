@@ -12,6 +12,7 @@ from dao import (
     insert_sky_condition,
     insert_weather,
 )
+from lightning_alert import LightningAlerter
 from sky_condition import estimate_sky_condition
 
 USE_MOCK_GW3000 = os.environ.get("USE_MOCK_GW3000", "false").strip().lower() in {"1", "true", "yes", "on"}
@@ -21,6 +22,15 @@ ECOWITT_URL = MOCK_GW3000_URL if USE_MOCK_GW3000 else ECOWITT_REAL_URL
 POLL_SECONDS = int(os.environ.get("POLL_SECONDS", "30"))
 STATION_LATITUDE = float(os.environ["STATION_LATITUDE"]) if os.environ.get("STATION_LATITUDE") else None
 STATION_LONGITUDE = float(os.environ["STATION_LONGITUDE"]) if os.environ.get("STATION_LONGITUDE") else None
+PUSHOVER_USER_KEY = os.environ.get("PUSHOVER_USER_KEY", "")
+PUSHOVER_API_TOKEN = os.environ.get("PUSHOVER_API_TOKEN", "")
+LIGHTNING_ALERT_RADIUS_MILES = float(os.environ.get("LIGHTNING_ALERT_RADIUS_MILES", "10"))
+
+lightning_alerter = LightningAlerter(
+    user_key=PUSHOVER_USER_KEY,
+    api_token=PUSHOVER_API_TOKEN,
+    radius_miles=LIGHTNING_ALERT_RADIUS_MILES,
+)
 
 
 def first_number(value):
@@ -148,6 +158,12 @@ def collect_once():
     if payload.get("piezoRain"):
         insert_rain(rain_ws90)
     insert_lightning(lightning)
+
+    if lightning:
+        try:
+            lightning_alerter.maybe_notify(lightning)
+        except requests.RequestException as exc:
+            print(f"Pushover notification error: {type(exc).__name__}: {exc}", flush=True)
 
     print(
         f"Stored observation {observed_at.isoformat()} "
