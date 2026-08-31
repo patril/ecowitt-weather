@@ -11,6 +11,7 @@ A small Raspberry Pi weather-data stack for the Ecowitt GW3000:
 - nginx reverse proxy publishing the dashboard at `http://weather.local/`
 - Daily solar-energy integration from stored irradiance observations
 - Real-time solar sky-condition estimation from station coordinates and irradiance
+- Pushover notifications for nearby WH57 lightning strikes
 - Containerized cron scheduler for daily solar-energy calculations
 
 ## Hardware/storage layout
@@ -219,10 +220,25 @@ STATION_LATITUDE=YOUR_LATITUDE
 STATION_LONGITUDE=YOUR_LONGITUDE
 POLL_SECONDS=30
 DAILY_ENERGY_MAX_GAP_SECONDS=300
+PUSHOVER_USER_KEY=YOUR_PUSHOVER_USER_KEY
+PUSHOVER_API_TOKEN=YOUR_PUSHOVER_APPLICATION_API_TOKEN
+LIGHTNING_ALERT_RADIUS_MILES=10
 ```
 
 Use decimal degrees for the coordinates; west longitudes and south latitudes are negative. Do not
 commit `.env`.
+
+For Pushover, `PUSHOVER_USER_KEY` is the user key shown on your Pushover account dashboard.
+Register an application in Pushover and put its API token in `PUSHOVER_API_TOKEN`. If either
+credential is omitted, lightning notifications are disabled. `LIGHTNING_ALERT_RADIUS_MILES`
+defaults to 10 miles when omitted.
+
+Nearby lightning notifications use the title `Nearby Lightning` and the message
+`Lightning struck within {distance} miles.`. They use normal Pushover priority and do not override
+your Pushover default notification sound. Notifications are limited to one every five minutes.
+The collector also remembers the most recently seen strike so the GW3000's repeated report of one
+strike does not generate duplicate alerts. Both pieces of alert state are intentionally in memory
+and reset when the collector container restarts.
 
 ### 6. Prepare the persistent directories
 
@@ -394,15 +410,16 @@ docker compose run --rm --no-deps collector python daily_energy_job.py 2026-08-2
 
 ## Tests
 
-The calculation tests use Python's standard `unittest` module:
+The calculation and alert tests use Python's standard `unittest` module:
 
 ```bash
-docker compose run --rm --no-deps collector python -m unittest test_daily_energy.py test_sky_condition.py
+docker compose run --rm --no-deps collector python -m unittest test_daily_energy.py test_sky_condition.py test_lightning_alert.py
 ```
 
 They cover solar-energy units, irregular sampling, missing-data gaps, empty/single-reading days,
 station-local DST boundaries, clear-sky calculation, variable-cloud detection, nighttime behavior,
-and missing station coordinates.
+missing station coordinates, nearby-lightning radius handling, duplicate suppression, Pushover
+message contents, and the five-minute alert cooldown.
 
 ## Useful commands
 
