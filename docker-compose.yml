@@ -66,10 +66,17 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      mock-gw3000:
+        condition: service_started
     command: ["/app/cron-entrypoint.sh"]
     environment:
       STATION_TIMEZONE: ${STATION_TIMEZONE:-America/New_York}
       DAILY_ENERGY_MAX_GAP_SECONDS: ${DAILY_ENERGY_MAX_GAP_SECONDS:-300}
+      USE_MOCK_GW3000: ${USE_MOCK_GW3000:-false}
+      ECOWITT_REAL_URL: ${ECOWITT_REAL_URL:-http://192.168.4.131/get_livedata_info}
+      MOCK_GW3000_URL: http://mock-gw3000:8080/get_livedata_info
+      PUSHOVER_USER_KEY: ${PUSHOVER_USER_KEY:-}
+      PUSHOVER_API_TOKEN: ${PUSHOVER_API_TOKEN:-}
       DATABASE_URL: postgresql://${POSTGRES_USER:-weather}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-weather}
 
   grafana:
