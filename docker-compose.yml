@@ -51,6 +51,8 @@ services:
       MOCK_GW3000_URL: http://mock-gw3000:8080/get_livedata_info
       POLL_SECONDS: ${POLL_SECONDS:-30}
       STATION_TIMEZONE: ${STATION_TIMEZONE:-America/New_York}
+      STATION_LATITUDE: ${STATION_LATITUDE:-}
+      STATION_LONGITUDE: ${STATION_LONGITUDE:-}
       DATABASE_URL: postgresql://${POSTGRES_USER:-weather}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-weather}
 
   daily-energy-scheduler:
