@@ -567,7 +567,7 @@
           "calcs": [
             "lastNotNull"
           ],
-          "fields": "",
+          "fields": "/^Current streak$/",
           "values": true
         },
         "textMode": "auto",
@@ -610,7 +610,7 @@
           "calcs": [
             "lastNotNull"
           ],
-          "fields": "",
+          "fields": "/^Sky condition$/",
           "values": true
         },
         "textMode": "value",
