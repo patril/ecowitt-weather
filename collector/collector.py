@@ -5,13 +5,32 @@ from datetime import datetime, timezone
 
 import requests
 
-from dao import insert_lightning, insert_rain, insert_weather
+from dao import (
+    get_recent_irradiance_readings,
+    insert_lightning,
+    insert_rain,
+    insert_sky_condition,
+    insert_weather,
+)
+from lightning_alert import LightningAlerter
+from sky_condition import estimate_sky_condition
 
 USE_MOCK_GW3000 = os.environ.get("USE_MOCK_GW3000", "false").strip().lower() in {"1", "true", "yes", "on"}
 ECOWITT_REAL_URL = os.environ.get("ECOWITT_REAL_URL", "http://192.168.4.131/get_livedata_info")
 MOCK_GW3000_URL = os.environ.get("MOCK_GW3000_URL", "http://mock-gw3000:8080/get_livedata_info")
 ECOWITT_URL = MOCK_GW3000_URL if USE_MOCK_GW3000 else ECOWITT_REAL_URL
 POLL_SECONDS = int(os.environ.get("POLL_SECONDS", "30"))
+STATION_LATITUDE = float(os.environ["STATION_LATITUDE"]) if os.environ.get("STATION_LATITUDE") else None
+STATION_LONGITUDE = float(os.environ["STATION_LONGITUDE"]) if os.environ.get("STATION_LONGITUDE") else None
+PUSHOVER_USER_KEY = os.environ.get("PUSHOVER_USER_KEY", "")
+PUSHOVER_API_TOKEN = os.environ.get("PUSHOVER_API_TOKEN", "")
+LIGHTNING_ALERT_RADIUS_MILES = float(os.environ.get("LIGHTNING_ALERT_RADIUS_MILES", "10"))
+
+lightning_alerter = LightningAlerter(
+    user_key=PUSHOVER_USER_KEY,
+    api_token=PUSHOVER_API_TOKEN,
+    radius_miles=LIGHTNING_ALERT_RADIUS_MILES,
+)
 
 
 def first_number(value):
@@ -99,6 +118,27 @@ def parse_rain_group(items, observed_at, source):
     }
 
 
+def apply_piezo_rain_rate_fallback(rain_wh40, rain_ws90):
+    """Return the canonical rain row, preferring WH40 unless only WS90 sees rain.
+
+    Cumulative rainfall values always remain the WH40 values. Only the
+    instantaneous rain rate is substituted, and the original WH40 payload is
+    retained in raw_json for diagnostics.
+    """
+    effective = dict(rain_wh40)
+    wh40_rate = rain_wh40.get("rain_rate_in_hr")
+    ws90_rate = rain_ws90.get("rain_rate_in_hr")
+
+    wh40_is_raining = wh40_rate is not None and wh40_rate > 0
+    ws90_is_raining = ws90_rate is not None and ws90_rate > 0
+
+    if not wh40_is_raining and ws90_is_raining:
+        effective["rain_rate_in_hr"] = ws90_rate
+        return effective, "ws90"
+
+    return effective, "wh40"
+
+
 def parse_lightning(payload, observed_at):
     item = (payload.get("lightning") or [{}])[0]
     if not item:
@@ -122,18 +162,35 @@ def collect_once():
     weather = parse_weather(payload, observed_at)
     rain_wh40 = parse_rain_group(payload.get("rain") or [], observed_at, "wh40")
     rain_ws90 = parse_rain_group(payload.get("piezoRain") or [], observed_at, "ws90")
+    effective_rain, rain_rate_source = apply_piezo_rain_rate_fallback(rain_wh40, rain_ws90)
     lightning = parse_lightning(payload, observed_at)
 
     insert_weather(weather)
+    sky_condition = estimate_sky_condition(
+        observed_at=observed_at,
+        irradiance=weather["solar_w_m2"],
+        recent_readings=get_recent_irradiance_readings(observed_at),
+        latitude=STATION_LATITUDE,
+        longitude=STATION_LONGITUDE,
+    )
+    insert_sky_condition(sky_condition)
+
     if payload.get("rain"):
-        insert_rain(rain_wh40)
+        insert_rain(effective_rain)
     if payload.get("piezoRain"):
         insert_rain(rain_ws90)
     insert_lightning(lightning)
 
+    if lightning:
+        try:
+            lightning_alerter.maybe_notify(lightning)
+        except requests.RequestException as exc:
+            print(f"Pushover notification error: {type(exc).__name__}: {exc}", flush=True)
+
     print(
         f"Stored observation {observed_at.isoformat()} "
-        f"temp={weather['outdoor_temp_f']}F solar={weather['solar_w_m2']}W/m2",
+        f"temp={weather['outdoor_temp_f']}F solar={weather['solar_w_m2']}W/m2 "
+        f"sky={sky_condition.condition} rain_rate_source={rain_rate_source}",
         flush=True,
     )
 

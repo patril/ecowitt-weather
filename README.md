@@ -10,6 +10,8 @@ A small Raspberry Pi weather-data stack for the Ecowitt GW3000:
 - Source-controlled Grafana weather dashboard provisioned automatically at startup
 - nginx reverse proxy publishing the dashboard at `http://weather.local/`
 - Daily solar-energy integration from stored irradiance observations
+- Real-time solar sky-condition estimation from station coordinates and irradiance
+- Pushover notifications for nearby WH57 lightning strikes
 - Containerized cron scheduler for daily solar-energy calculations
 
 ## Screenshots
@@ -60,7 +62,13 @@ that the Pi's USB mount exists:
 DATA_ROOT=./data
 USE_MOCK_GW3000=true
 STATION_TIMEZONE=America/New_York
+STATION_LATITUDE=YOUR_LATITUDE
+STATION_LONGITUDE=YOUR_LONGITUDE
 ```
+
+The station coordinates are used only for solar geometry and clear-sky irradiance. They are not
+hard-coded in the application, so the sky-condition estimator can be used at any station location.
+If they are omitted, the dashboard reports the sky condition as `Unavailable`.
 
 Prepare the bind-mounted directories:
 
@@ -143,6 +151,21 @@ docker compose version
 sudo systemctl status docker
 ```
 
+Enable Docker to start automatically whenever the Pi boots:
+
+```bash
+sudo systemctl enable --now docker
+```
+
+Verify both the boot setting and current state:
+
+```bash
+systemctl is-enabled docker
+systemctl is-active docker
+```
+
+Both commands should report success (`enabled` and `active`).
+
 If you choose to run Docker without `sudo`, add your user to the `docker` group and log out/back in:
 
 ```bash
@@ -197,7 +220,7 @@ refuses to launch the weather stack until `/mnt/weather-data` is really mounted.
 ### 5. Configure `.env` for the Pi
 
 Create `.env` in the project directory. At minimum configure the data root, passwords, station URL,
-and timezone:
+timezone, and station coordinates:
 
 ```text
 DATA_ROOT=/mnt/weather-data
@@ -209,11 +232,29 @@ GRAFANA_ADMIN_PASSWORD=CHOOSE_A_DIFFERENT_PASSWORD
 USE_MOCK_GW3000=false
 ECOWITT_REAL_URL=http://192.168.4.131/get_livedata_info
 STATION_TIMEZONE=America/New_York
+STATION_LATITUDE=YOUR_LATITUDE
+STATION_LONGITUDE=YOUR_LONGITUDE
 POLL_SECONDS=30
 DAILY_ENERGY_MAX_GAP_SECONDS=300
+PUSHOVER_USER_KEY=YOUR_PUSHOVER_USER_KEY
+PUSHOVER_API_TOKEN=YOUR_PUSHOVER_APPLICATION_API_TOKEN
+LIGHTNING_ALERT_RADIUS_MILES=10
 ```
 
-Do not commit `.env`.
+Use decimal degrees for the coordinates; west longitudes and south latitudes are negative. Do not
+commit `.env`.
+
+For Pushover, `PUSHOVER_USER_KEY` is the user key shown on your Pushover account dashboard.
+Register an application in Pushover and put its API token in `PUSHOVER_API_TOKEN`. If either
+credential is omitted, lightning notifications are disabled. `LIGHTNING_ALERT_RADIUS_MILES`
+defaults to 10 miles when omitted.
+
+Nearby lightning notifications use the title `Nearby Lightning` and the message
+`Lightning struck within {distance} miles.`. They use normal Pushover priority and do not override
+your Pushover default notification sound. Notifications are limited to one every five minutes.
+The collector also remembers the most recently seen strike so the GW3000's repeated report of one
+strike does not generate duplicate alerts. Both pieces of alert state are intentionally in memory
+and reset when the collector container restarts.
 
 ### 6. Prepare the persistent directories
 
@@ -241,6 +282,30 @@ docker compose ps
 
 You should see PostgreSQL, the collector, Grafana, nginx, the mock service, and the daily-energy scheduler.
 The mock remains running but is ignored when `USE_MOCK_GW3000=false`.
+
+All long-running services in `docker-compose.yml` use `restart: unless-stopped`. Once the stack has
+been created by `./scripts/start.sh`, Docker remembers the containers and automatically restarts them
+when the Docker daemon starts after a Pi reboot. There is no separate systemd unit or boot-time
+`docker compose up` command required for the Compose project.
+
+This also means an intentional `docker stop` is respected. To remove the containers entirely, use
+`docker compose down`; after that, run `./scripts/start.sh` again to recreate the project before
+expecting it to return on later reboots.
+
+Test the complete boot path once after initial setup:
+
+```bash
+sudo reboot
+```
+
+After reconnecting to the Pi:
+
+```bash
+systemctl is-active docker
+docker compose ps
+```
+
+Docker should be active and the weather services should be running without manually starting Compose.
 
 Useful logs:
 
@@ -309,6 +374,15 @@ as a precise daily total.
 The date query uses half-open timestamp bounds in `STATION_TIMEZONE` (default `America/New_York`),
 including correct 23- and 25-hour DST days.
 
+### `sky_condition_observation`
+
+Stores the collector's current solar sky-condition estimate plus the clear-sky index, short-window
+variability, and expected clear-sky irradiance used to derive it. The public dashboard displays only
+the condition tag. The estimator uses station coordinates, solar geometry, the Haurwitz clear-sky
+model, and the most recent five minutes of irradiance; wind and region-specific weather assumptions
+are deliberately excluded. At night or very low solar elevation it reports `Night / low sun` rather
+than guessing cloud cover.
+
 ## Containerized daily-energy schedule
 
 No host crontab is required. `docker-compose.yml` includes a `daily-energy-scheduler` service built
@@ -352,14 +426,16 @@ docker compose run --rm --no-deps collector python daily_energy_job.py 2026-08-2
 
 ## Tests
 
-The daily integration tests use Python's standard `unittest` module:
+The calculation and alert tests use Python's standard `unittest` module:
 
 ```bash
-docker compose run --rm --no-deps collector python -m unittest test_daily_energy.py
+docker compose run --rm --no-deps collector python -m unittest test_daily_energy.py test_sky_condition.py test_lightning_alert.py
 ```
 
-They cover units, irregular sampling, missing-data gaps, empty/single-reading days, and station-local
-DST boundaries.
+They cover solar-energy units, irregular sampling, missing-data gaps, empty/single-reading days,
+station-local DST boundaries, clear-sky calculation, variable-cloud detection, nighttime behavior,
+missing station coordinates, nearby-lightning radius handling, duplicate suppression, Pushover
+message contents, and the five-minute alert cooldown.
 
 ## Useful commands
 
