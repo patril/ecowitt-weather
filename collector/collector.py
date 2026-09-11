@@ -118,27 +118,6 @@ def parse_rain_group(items, observed_at, source):
     }
 
 
-def apply_piezo_rain_rate_fallback(rain_wh40, rain_ws90):
-    """Return the canonical rain row, preferring WH40 unless only WS90 sees rain.
-
-    Cumulative rainfall values always remain the WH40 values. Only the
-    instantaneous rain rate is substituted, and the original WH40 payload is
-    retained in raw_json for diagnostics.
-    """
-    effective = dict(rain_wh40)
-    wh40_rate = rain_wh40.get("rain_rate_in_hr")
-    ws90_rate = rain_ws90.get("rain_rate_in_hr")
-
-    wh40_is_raining = wh40_rate is not None and wh40_rate > 0
-    ws90_is_raining = ws90_rate is not None and ws90_rate > 0
-
-    if not wh40_is_raining and ws90_is_raining:
-        effective["rain_rate_in_hr"] = ws90_rate
-        return effective, "ws90"
-
-    return effective, "wh40"
-
-
 def parse_lightning(payload, observed_at):
     item = (payload.get("lightning") or [{}])[0]
     if not item:
@@ -162,7 +141,6 @@ def collect_once():
     weather = parse_weather(payload, observed_at)
     rain_wh40 = parse_rain_group(payload.get("rain") or [], observed_at, "wh40")
     rain_ws90 = parse_rain_group(payload.get("piezoRain") or [], observed_at, "ws90")
-    effective_rain, rain_rate_source = apply_piezo_rain_rate_fallback(rain_wh40, rain_ws90)
     lightning = parse_lightning(payload, observed_at)
 
     insert_weather(weather)
@@ -176,7 +154,7 @@ def collect_once():
     insert_sky_condition(sky_condition)
 
     if payload.get("rain"):
-        insert_rain(effective_rain)
+        insert_rain(rain_wh40)
     if payload.get("piezoRain"):
         insert_rain(rain_ws90)
     insert_lightning(lightning)
@@ -190,7 +168,7 @@ def collect_once():
     print(
         f"Stored observation {observed_at.isoformat()} "
         f"temp={weather['outdoor_temp_f']}F solar={weather['solar_w_m2']}W/m2 "
-        f"sky={sky_condition.condition} rain_rate_source={rain_rate_source}",
+        f"sky={sky_condition.condition}",
         flush=True,
     )
 
