@@ -14,6 +14,22 @@ A small Raspberry Pi weather-data stack for the Ecowitt GW3000:
 - Pushover notifications for nearby WH57 lightning strikes
 - Containerized cron scheduler for daily solar-energy calculations
 
+## Screenshots
+
+The dashboards below show examples of the weather data and derived energy measurements collected by the stack.
+
+### Current weather dashboard
+
+![Current weather dashboard](docs/images/weather-dashboard.png)
+
+### Daily solar energy
+
+![Daily solar energy dashboard](docs/images/solar-energy-dashboard.png)
+
+### Daily wind energy
+
+![Daily wind energy dashboard](docs/images/wind-energy-dashboard.png)
+
 ## Hardware/storage layout
 
 ```text
