@@ -112,13 +112,51 @@
       },
       "fieldConfig": {
         "defaults": {
+          "decimals": 1,
+          "noValue": "No wind data",
           "color": {
             "mode": "fixed",
             "fixedColor": "text"
-          },
-          "noValue": "No wind data"
+          }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Wind speed"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "mph"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Wind direction"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "degree"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Gust"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "mph"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "x": 18,
@@ -131,7 +169,9 @@
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "center",
-        "textMode": "value",
+        "orientation": "horizontal",
+        "textMode": "value_and_name",
+        "wideLayout": false,
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -146,7 +186,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT CONCAT(\n  ROUND(wind_speed_mph::numeric, 1), ' mph ',\n  (ARRAY['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'])[1 + MOD(FLOOR(MOD(wind_direction_deg::numeric + 360, 360) / 22.5 + 0.5)::int, 16)],\n  ' · Gust ', ROUND(wind_gust_mph::numeric, 1), ' mph'\n) AS \"Wind\"\nFROM weather_observation\nORDER BY observed_at DESC LIMIT 1"
+          "rawSql": "SELECT\n  wind_speed_mph AS \"Wind speed\",\n  wind_direction_deg AS \"Wind direction\",\n  wind_gust_mph AS \"Gust\"\nFROM weather_observation\nORDER BY observed_at DESC\nLIMIT 1"
         }
       ],
       "title": "Wind",
