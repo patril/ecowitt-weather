@@ -111,52 +111,8 @@
         "uid": "weather-postgres"
       },
       "fieldConfig": {
-        "defaults": {
-          "decimals": 1,
-          "noValue": "No wind data",
-          "color": {
-            "mode": "fixed",
-            "fixedColor": "text"
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Wind speed"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "mph"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Wind direction"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "degree"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Gust"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "mph"
-              }
-            ]
-          }
-        ]
+        "defaults": {},
+        "overrides": []
       },
       "gridPos": {
         "x": 18,
@@ -166,19 +122,24 @@
       },
       "id": 3,
       "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "orientation": "horizontal",
-        "textMode": "value_and_name",
-        "wideLayout": false,
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        }
+        "add100Percentage": true,
+        "centerAlignContent": true,
+        "overflow": "hidden",
+        "useGrafanaScrollbar": false,
+        "SVGBaseFix": true,
+        "codeData": "{}",
+        "rootCSS": "",
+        "css": ".wind-card { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 7px; box-sizing: border-box; padding: 4px; color: var(--grafana-text-primary, #e8edf4); font-family: Inter, Arial, sans-serif; text-align: center; } .wind-main { font-size: clamp(20px, 2.5vw, 34px); font-weight: 650; line-height: 1.1; white-space: nowrap; } .wind-gust { font-size: clamp(15px, 1.65vw, 22px); opacity: .82; white-space: nowrap; }",
+        "html": "<div class=\"wind-card\"><div class=\"wind-main\" id=\"wind-main\">-- mph --</div><div class=\"wind-gust\" id=\"wind-gust\">Gust -- mph</div></div>",
+        "onRender": "const fields = data.series?.flatMap(series => series.fields || []) || [];\nconst last = name => {\n  const field = fields.find(f => f.name === name);\n  if (!field?.values?.length) return null;\n  const i = field.values.length - 1;\n  const value = field.values.get ? field.values.get(i) : field.values[i];\n  return value == null || !Number.isFinite(Number(value)) ? null : Number(value);\n};\nconst speed = last('Wind speed');\nconst direction = last('Wind direction');\nconst gust = last('Wind gust');\nconst main = htmlNode.getElementById('wind-main');\nconst gustNode = htmlNode.getElementById('wind-gust');\nif (!main || !gustNode) return;\nconst compass = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];\nconst bearing = direction === null ? '--' : compass[Math.round((((direction % 360) + 360) % 360) / 22.5) % 16];\nmain.textContent = speed === null ? 'Wind unavailable' : speed.toFixed(1) + ' mph ' + bearing;\ngustNode.textContent = gust === null ? 'Gust unavailable' : 'Gust ' + gust.toFixed(1) + ' mph';",
+        "renderOnMount": true,
+        "panelupdateOnMount": true,
+        "dynamicHtmlGraphics": false,
+        "dynamicData": false,
+        "dynamicFieldDisplayValues": false,
+        "dynamicProps": false,
+        "onInitOnResize": false,
+        "onInit": ""
       },
       "targets": [
         {
@@ -186,58 +147,13 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  wind_speed_mph AS \"Wind speed\",\n  wind_direction_deg AS \"Wind direction\",\n  wind_gust_mph AS \"Gust\"\nFROM weather_observation\nORDER BY observed_at DESC\nLIMIT 1"
+          "rawSql": "SELECT wind_speed_mph AS \"Wind speed\", wind_direction_deg AS \"Wind direction\", wind_gust_mph AS \"Wind gust\" FROM weather_observation ORDER BY observed_at DESC LIMIT 1"
         }
       ],
       "title": "Wind",
-      "type": "stat",
-      "description": "Latest wind speed, compass direction and gust"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "weather-postgres"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "suffix: mph",
-          "decimals": 1
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 5,
-        "w": 6,
-        "h": 3
-      },
-      "id": 4,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT wind_gust_mph AS \"Wind gust\" FROM weather_observation ORDER BY observed_at DESC LIMIT 1",
-          "refId": "A"
-        }
-      ],
-      "title": "Wind Gust",
-      "type": "stat"
+      "type": "gapit-htmlgraphics-panel",
+      "description": "Latest wind speed, compass direction and gust",
+      "pluginVersion": "2.2.3"
     },
     {
       "datasource": {
@@ -252,9 +168,9 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 6,
+        "x": 0,
         "y": 5,
-        "w": 6,
+        "w": 8,
         "h": 3
       },
       "id": 5,
@@ -298,9 +214,9 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 12,
+        "x": 6,
         "y": 5,
-        "w": 6,
+        "w": 8,
         "h": 3
       },
       "id": 6,
@@ -344,9 +260,9 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 18,
+        "x": 12,
         "y": 5,
-        "w": 6,
+        "w": 8,
         "h": 3
       },
       "id": 7,
