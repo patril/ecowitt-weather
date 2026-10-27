@@ -14,8 +14,12 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "suffix: °F",
-          "decimals": 1
+          "unit": "fahrenheit",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
         },
         "overrides": []
       },
@@ -27,15 +31,17 @@
       },
       "id": 1,
       "options": {
-        "showTitle": false,
-        "showValue": true,
-        "showTickLabels": true,
-        "operatorName": "lastNotNull",
-        "minValue": 30,
-        "maxValue": 120,
-        "allowNeedleCrossLimits": true,
-        "animateNeedleValueTransition": true,
-        "formatTickLabelsWithUnit": false
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value_and_name",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
       },
       "targets": [
         {
@@ -47,7 +53,7 @@
         }
       ],
       "title": "Outdoor Temperature",
-      "type": "briangann-gauge-panel"
+      "type": "stat"
     },
     {
       "datasource": {
@@ -56,28 +62,34 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "suffix: °F",
-          "decimals": 1
+          "unit": "fahrenheit",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
         },
         "overrides": []
       },
       "gridPos": {
-        "x": 8,
+        "x": 12,
         "y": 0,
-        "w": 8,
+        "w": 6,
         "h": 5
       },
       "id": 2,
       "options": {
-        "showTitle": false,
-        "showValue": true,
-        "showTickLabels": true,
-        "operatorName": "lastNotNull",
-        "minValue": 30,
-        "maxValue": 120,
-        "allowNeedleCrossLimits": true,
-        "animateNeedleValueTransition": true,
-        "formatTickLabelsWithUnit": false
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value_and_name",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
       },
       "targets": [
         {
@@ -89,7 +101,7 @@
         }
       ],
       "title": "Feels Like",
-      "type": "briangann-gauge-panel"
+      "type": "stat"
     },
     {
       "datasource": {
@@ -101,9 +113,9 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 16,
+        "x": 18,
         "y": 0,
-        "w": 8,
+        "w": 6,
         "h": 5
       },
       "id": 3,
@@ -399,7 +411,7 @@
     },
     {
       "id": 10,
-      "title": "Station Data Age",
+      "title": "Weather Data Status",
       "type": "stat",
       "datasource": {
         "type": "postgres",
@@ -413,14 +425,52 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "s",
-          "decimals": 0
+          "unit": "none",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 2
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "LIVE"
+                },
+                "1": {
+                  "text": "DELAYED"
+                },
+                "2": {
+                  "text": "OFFLINE"
+                }
+              }
+            }
+          ]
         },
         "overrides": []
       },
       "options": {
-        "colorMode": "value",
+        "colorMode": "background",
         "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -435,7 +485,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT EXTRACT(EPOCH FROM (NOW() - MAX(observed_at))) AS \"Age (seconds)\" FROM weather_observation"
+          "rawSql": "SELECT CASE WHEN MAX(observed_at) IS NULL THEN 2 WHEN NOW() - MAX(observed_at) <= INTERVAL '90 seconds' THEN 0 WHEN NOW() - MAX(observed_at) <= INTERVAL '3 minutes' THEN 1 ELSE 2 END AS \"Weather data status\" FROM weather_observation"
         }
       ]
     },
@@ -449,14 +499,18 @@
       },
       "gridPos": {
         "x": 8,
-        "y": 16,
-        "w": 8,
-        "h": 3
+        "y": 0,
+        "w": 4,
+        "h": 5
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "suffix: °F",
-          "decimals": 0
+          "unit": "fahrenheit",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
         },
         "overrides": []
       },
@@ -469,7 +523,9 @@
           ],
           "fields": "",
           "values": false
-        }
+        },
+        "justifyMode": "center",
+        "textMode": "value_and_name"
       },
       "targets": [
         {
