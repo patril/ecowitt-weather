@@ -52,8 +52,9 @@
           "refId": "A"
         }
       ],
-      "title": "Outdoor Temperature",
-      "type": "stat"
+      "title": "",
+      "type": "stat",
+      "description": "Outdoor Temperature"
     },
     {
       "datasource": {
@@ -100,8 +101,9 @@
           "refId": "A"
         }
       ],
-      "title": "Feels Like",
-      "type": "stat"
+      "title": "",
+      "type": "stat",
+      "description": "Feels Like"
     },
     {
       "datasource": {
@@ -109,7 +111,13 @@
         "uid": "weather-postgres"
       },
       "fieldConfig": {
-        "defaults": {},
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          },
+          "noValue": "No wind data"
+        },
         "overrides": []
       },
       "gridPos": {
@@ -120,24 +128,30 @@
       },
       "id": 3,
       "options": {
-        "trueWindDirField": "Wind direction",
-        "trueWindSpdField": "Wind speed",
-        "trueWindSpdUom": "mph",
-        "showLabels": true,
-        "showHeadingValue": false,
-        "rotationMode": "rotate-needle"
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
       },
       "targets": [
         {
+          "refId": "A",
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT wind_direction_deg AS \"Wind direction\", wind_speed_mph AS \"Wind speed\" FROM weather_observation ORDER BY observed_at DESC LIMIT 1",
-          "refId": "A"
+          "rawSql": "SELECT CONCAT(\n  ROUND(wind_speed_mph::numeric, 1), ' mph ',\n  (ARRAY['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'])[1 + MOD(FLOOR(MOD(wind_direction_deg::numeric + 360, 360) / 22.5 + 0.5)::int, 16)],\n  ' · Gust ', ROUND(wind_gust_mph::numeric, 1), ' mph'\n) AS \"Wind\"\nFROM weather_observation\nORDER BY observed_at DESC LIMIT 1"
         }
       ],
       "title": "Wind",
-      "type": "oceandatatools-compass-panel"
+      "type": "stat",
+      "description": "Latest wind speed, compass direction and gust"
     },
     {
       "datasource": {
@@ -338,7 +352,7 @@
       "gridPos": {
         "x": 0,
         "y": 8,
-        "w": 16,
+        "w": 24,
         "h": 8
       },
       "id": 8,
@@ -364,49 +378,6 @@
         }
       ],
       "title": "Temperature",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "weather-postgres"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "suffix: mph",
-          "decimals": 1
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "x": 16,
-        "y": 8,
-        "w": 8,
-        "h": 8
-      },
-      "id": 9,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "editorMode": "code",
-          "format": "time_series",
-          "rawQuery": true,
-          "rawSql": "SELECT observed_at AS \"time\", wind_speed_mph AS \"Wind speed\", wind_gust_mph AS \"Wind gust\" FROM weather_observation WHERE $__timeFilter(observed_at) ORDER BY observed_at",
-          "refId": "A"
-        }
-      ],
-      "title": "Wind Speed / Gust",
       "type": "timeseries"
     },
     {
@@ -491,7 +462,7 @@
     },
     {
       "id": 11,
-      "title": "Dew Point",
+      "title": "",
       "type": "stat",
       "datasource": {
         "type": "postgres",
@@ -535,7 +506,8 @@
           "rawQuery": true,
           "rawSql": "SELECT dewpoint_f AS \"Dew point\" FROM weather_observation ORDER BY observed_at DESC LIMIT 1"
         }
-      ]
+      ],
+      "description": "Dew Point"
     },
     {
       "id": 12,
