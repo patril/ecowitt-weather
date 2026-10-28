@@ -34,7 +34,7 @@
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "center",
-        "textMode": "value_and_name",
+        "textMode": "value",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -52,9 +52,9 @@
           "refId": "A"
         }
       ],
-      "title": "",
+      "title": "Outdoor",
       "type": "stat",
-      "description": "Outdoor Temperature"
+      "description": "Outdoor temperature, emphasized for across-room visibility"
     },
     {
       "datasource": {
@@ -394,7 +394,7 @@
         "overrides": []
       },
       "options": {
-        "colorMode": "background",
+        "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "center",
         "textMode": "value",
