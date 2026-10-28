@@ -27,7 +27,7 @@
         "x": 0,
         "y": 0,
         "w": 8,
-        "h": 5
+        "h": 4
       },
       "id": 1,
       "options": {
@@ -76,7 +76,7 @@
         "x": 12,
         "y": 0,
         "w": 6,
-        "h": 5
+        "h": 4
       },
       "id": 2,
       "options": {
@@ -118,7 +118,7 @@
         "x": 18,
         "y": 0,
         "w": 6,
-        "h": 5
+        "h": 4
       },
       "id": 3,
       "options": {
@@ -169,8 +169,8 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 5,
-        "w": 8,
+        "y": 4,
+        "w": 6,
         "h": 3
       },
       "id": 5,
@@ -215,8 +215,8 @@
       },
       "gridPos": {
         "x": 6,
-        "y": 5,
-        "w": 8,
+        "y": 4,
+        "w": 6,
         "h": 3
       },
       "id": 6,
@@ -261,8 +261,8 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 5,
-        "w": 8,
+        "y": 4,
+        "w": 6,
         "h": 3
       },
       "id": 7,
@@ -307,9 +307,9 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 8,
+        "y": 7,
         "w": 24,
-        "h": 8
+        "h": 5
       },
       "id": 8,
       "options": {
@@ -338,7 +338,7 @@
     },
     {
       "id": 10,
-      "title": "Weather Data Status",
+      "title": "",
       "type": "stat",
       "datasource": {
         "type": "postgres",
@@ -346,9 +346,9 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 16,
-        "w": 8,
-        "h": 3
+        "y": 12,
+        "w": 24,
+        "h": 2
       },
       "fieldConfig": {
         "defaults": {
@@ -414,7 +414,8 @@
           "rawQuery": true,
           "rawSql": "SELECT CASE WHEN MAX(observed_at) IS NULL THEN 2 WHEN NOW() - MAX(observed_at) <= INTERVAL '90 seconds' THEN 0 WHEN NOW() - MAX(observed_at) <= INTERVAL '3 minutes' THEN 1 ELSE 2 END AS \"Weather data status\" FROM weather_observation"
         }
-      ]
+      ],
+      "description": "Weather data freshness"
     },
     {
       "id": 11,
@@ -428,7 +429,7 @@
         "x": 8,
         "y": 0,
         "w": 4,
-        "h": 5
+        "h": 4
       },
       "fieldConfig": {
         "defaults": {
@@ -474,9 +475,9 @@
         "uid": "weather-postgres"
       },
       "gridPos": {
-        "x": 16,
-        "y": 16,
-        "w": 8,
+        "x": 18,
+        "y": 4,
+        "w": 6,
         "h": 3
       },
       "fieldConfig": {
