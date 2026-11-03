@@ -1,0 +1,529 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": false,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "weather-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "fahrenheit",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 4
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT outdoor_temp_f AS \"Outdoor temperature\" FROM weather_observation ORDER BY observed_at DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Outdoor",
+      "type": "stat",
+      "description": "Outdoor temperature, emphasized for across-room visibility"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "weather-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "fahrenheit",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value_and_name",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT feels_like_f AS \"Feels like\" FROM weather_observation ORDER BY observed_at DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "",
+      "type": "stat",
+      "description": "Feels Like"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "weather-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "id": 3,
+      "options": {
+        "add100Percentage": true,
+        "centerAlignContent": true,
+        "overflow": "hidden",
+        "useGrafanaScrollbar": false,
+        "SVGBaseFix": true,
+        "codeData": "{}",
+        "rootCSS": "",
+        "css": ".wind-card { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 7px; box-sizing: border-box; padding: 4px; color: var(--grafana-text-primary, #e8edf4); font-family: Inter, Arial, sans-serif; text-align: center; } .wind-main { font-size: clamp(20px, 2.5vw, 34px); font-weight: 650; line-height: 1.1; white-space: nowrap; } .wind-gust { font-size: clamp(15px, 1.65vw, 22px); opacity: .82; white-space: nowrap; }",
+        "html": "<div class=\"wind-card\"><div class=\"wind-main\" id=\"wind-main\">-- mph --</div><div class=\"wind-gust\" id=\"wind-gust\">Gust -- mph</div></div>",
+        "onRender": "const fields = data.series?.flatMap(series => series.fields || []) || [];\nconst last = name => {\n  const field = fields.find(f => f.name === name);\n  if (!field?.values?.length) return null;\n  const i = field.values.length - 1;\n  const value = field.values.get ? field.values.get(i) : field.values[i];\n  return value == null || !Number.isFinite(Number(value)) ? null : Number(value);\n};\nconst speed = last('Wind speed');\nconst direction = last('Wind direction');\nconst gust = last('Wind gust');\nconst main = htmlNode.getElementById('wind-main');\nconst gustNode = htmlNode.getElementById('wind-gust');\nif (!main || !gustNode) return;\nconst compass = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];\nconst bearing = direction === null ? '--' : compass[Math.round((((direction % 360) + 360) % 360) / 22.5) % 16];\nmain.textContent = speed === null ? 'Wind unavailable' : speed.toFixed(1) + ' mph ' + bearing;\ngustNode.textContent = gust === null ? 'Gust unavailable' : 'Gust ' + gust.toFixed(1) + ' mph';",
+        "renderOnMount": true,
+        "panelupdateOnMount": true,
+        "dynamicHtmlGraphics": false,
+        "dynamicData": false,
+        "dynamicFieldDisplayValues": false,
+        "dynamicProps": false,
+        "onInitOnResize": false,
+        "onInit": ""
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT wind_speed_mph AS \"Wind speed\", wind_direction_deg AS \"Wind direction\", wind_gust_mph AS \"Wind gust\" FROM weather_observation ORDER BY observed_at DESC LIMIT 1"
+        }
+      ],
+      "title": "Wind",
+      "type": "gapit-htmlgraphics-panel",
+      "description": "Latest wind speed, compass direction and gust",
+      "pluginVersion": "2.2.3"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "weather-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: in",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 6,
+        "h": 3
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT daily_rain_in AS \"Today\" FROM rain_observation WHERE source = 'wh40' ORDER BY observed_at DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Rainfall Today",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "weather-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: W/m²",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 4,
+        "w": 6,
+        "h": 3
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT solar_w_m2 AS \"Solar irradiance\" FROM weather_observation ORDER BY observed_at DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Solar Irradiance",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "weather-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: inHg",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 6,
+        "h": 3
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT relative_pressure_inhg AS \"Relative pressure\" FROM weather_observation ORDER BY observed_at DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "Relative Pressure",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "weather-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: °F",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 24,
+        "h": 8
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT observed_at AS \"time\", outdoor_temp_f AS \"Outdoor temperature\", feels_like_f AS \"Feels like\", dewpoint_f AS \"Dew point\" FROM weather_observation WHERE $__timeFilter(observed_at) ORDER BY observed_at",
+          "refId": "A"
+        }
+      ],
+      "title": "Temperature",
+      "type": "timeseries"
+    },
+    {
+      "id": 10,
+      "title": "",
+      "type": "stat",
+      "datasource": {
+        "type": "postgres",
+        "uid": "weather-postgres"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 24,
+        "h": 2
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 2
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "LIVE"
+                },
+                "1": {
+                  "text": "DELAYED"
+                },
+                "2": {
+                  "text": "OFFLINE"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT CASE WHEN MAX(observed_at) IS NULL THEN 2 WHEN NOW() - MAX(observed_at) <= INTERVAL '90 seconds' THEN 0 WHEN NOW() - MAX(observed_at) <= INTERVAL '3 minutes' THEN 1 ELSE 2 END AS \"Weather data status\" FROM weather_observation"
+        }
+      ],
+      "description": "Weather data freshness"
+    },
+    {
+      "id": 11,
+      "title": "",
+      "type": "stat",
+      "datasource": {
+        "type": "postgres",
+        "uid": "weather-postgres"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "fahrenheit",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "justifyMode": "center",
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT dewpoint_f AS \"Dew point\" FROM weather_observation ORDER BY observed_at DESC LIMIT 1"
+        }
+      ],
+      "description": "Dew Point"
+    },
+    {
+      "id": 12,
+      "title": "Humidity",
+      "type": "stat",
+      "datasource": {
+        "type": "postgres",
+        "uid": "weather-postgres"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 4,
+        "w": 6,
+        "h": 3
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT outdoor_humidity_pct AS \"Humidity\" FROM weather_observation ORDER BY observed_at DESC LIMIT 1"
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "weather",
+    "kiosk"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-12h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "Weather Kiosk",
+  "uid": "weather-kiosk",
+  "version": 1
+}
