@@ -170,7 +170,7 @@
       "gridPos": {
         "x": 0,
         "y": 4,
-        "w": 6,
+        "w": 4,
         "h": 3
       },
       "id": 5,
@@ -214,9 +214,9 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 6,
+        "x": 4,
         "y": 4,
-        "w": 6,
+        "w": 4,
         "h": 3
       },
       "id": 6,
@@ -260,9 +260,9 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 12,
+        "x": 8,
         "y": 4,
-        "w": 6,
+        "w": 4,
         "h": 3
       },
       "id": 7,
@@ -475,9 +475,9 @@
         "uid": "weather-postgres"
       },
       "gridPos": {
-        "x": 18,
+        "x": 12,
         "y": 4,
-        "w": 6,
+        "w": 4,
         "h": 3
       },
       "fieldConfig": {
@@ -507,6 +507,100 @@
           "rawSql": "SELECT outdoor_humidity_pct AS \"Humidity\" FROM weather_observation ORDER BY observed_at DESC LIMIT 1"
         }
       ]
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "weather-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "fahrenheit",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 4,
+        "w": 4,
+        "h": 3
+      },
+      "id": 13,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT MAX(outdoor_temp_f) AS \"Today's High\" FROM weather_observation WHERE observed_at >= (date_trunc('day', NOW() AT TIME ZONE 'America/New_York') AT TIME ZONE 'America/New_York') AND observed_at <= NOW()",
+          "refId": "A"
+        }
+      ],
+      "title": "Today's High",
+      "type": "stat",
+      "description": "Observed outdoor temperature since local midnight (America/New_York)"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "weather-postgres"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "fahrenheit",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 4,
+        "w": 4,
+        "h": 3
+      },
+      "id": 14,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT MIN(outdoor_temp_f) AS \"Today's Low\" FROM weather_observation WHERE observed_at >= (date_trunc('day', NOW() AT TIME ZONE 'America/New_York') AT TIME ZONE 'America/New_York') AND observed_at <= NOW()",
+          "refId": "A"
+        }
+      ],
+      "title": "Today's Low",
+      "type": "stat",
+      "description": "Observed outdoor temperature since local midnight (America/New_York)"
     }
   ],
   "refresh": "30s",
