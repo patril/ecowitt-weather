@@ -514,10 +514,7 @@
         "uid": "weather-postgres"
       },
       "fieldConfig": {
-        "defaults": {
-          "unit": "fahrenheit",
-          "decimals": 1
-        },
+        "defaults": {},
         "overrides": []
       },
       "gridPos": {
@@ -528,32 +525,38 @@
       },
       "id": 13,
       "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto",
-        "wideLayout": true
+        "add100Percentage": true,
+        "centerAlignContent": true,
+        "overflow": "hidden",
+        "useGrafanaScrollbar": false,
+        "SVGBaseFix": true,
+        "codeData": "{}",
+        "rootCSS": "",
+        "css": ".extreme-card { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 3px; box-sizing: border-box; padding: 3px; font-family: Inter, Arial, sans-serif; text-align: center; color: var(--grafana-text-primary, #e8edf4); } .extreme-temp { font-size: clamp(20px, 2.5vw, 36px); font-weight: 650; line-height: 1.1; white-space: nowrap; } .extreme-time { font-size: clamp(12px, 1.2vw, 17px); opacity: .72; white-space: nowrap; }",
+        "html": "<div class=\"extreme-card\"><div class=\"extreme-temp\" id=\"extreme-temp\">--°F</div><div class=\"extreme-time\" id=\"extreme-time\">--</div></div>",
+        "onRender": "const fields = data.series?.flatMap(series => series.fields || []) || [];\nconst value = name => {\n  const field = fields.find(f => f.name === name);\n  if (!field?.values?.length) return null;\n  const i = field.values.length - 1;\n  return field.values.get ? field.values.get(i) : field.values[i];\n};\nconst temp = value('Temperature');\nconst time = value('Time');\nconst tempNode = htmlNode.getElementById('extreme-temp');\nconst timeNode = htmlNode.getElementById('extreme-time');\nif (!tempNode || !timeNode) return;\ntempNode.textContent = temp == null || !Number.isFinite(Number(temp)) ? '--°F' : Number(temp).toFixed(1) + '°F';\ntimeNode.textContent = time == null || !String(time).trim() ? 'No reading today' : 'at ' + String(time).trim();",
+        "renderOnMount": true,
+        "panelupdateOnMount": true,
+        "dynamicHtmlGraphics": false,
+        "dynamicData": false,
+        "dynamicFieldDisplayValues": false,
+        "dynamicProps": false,
+        "onInitOnResize": false,
+        "onInit": ""
       },
       "targets": [
         {
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT MAX(outdoor_temp_f) AS \"Today's High\" FROM weather_observation WHERE observed_at >= (date_trunc('day', NOW() AT TIME ZONE 'America/New_York') AT TIME ZONE 'America/New_York') AND observed_at <= NOW()",
+          "rawSql": "SELECT outdoor_temp_f AS \"Temperature\", to_char(observed_at AT TIME ZONE 'America/New_York', 'FMHH12:MI AM') AS \"Time\" FROM weather_observation WHERE observed_at >= (date_trunc('day', NOW() AT TIME ZONE 'America/New_York') AT TIME ZONE 'America/New_York') AND observed_at <= NOW() AND outdoor_temp_f IS NOT NULL ORDER BY outdoor_temp_f DESC, observed_at ASC LIMIT 1",
           "refId": "A"
         }
       ],
       "title": "Today's High",
-      "type": "stat",
-      "description": "Observed outdoor temperature since local midnight (America/New_York)"
+      "type": "gapit-htmlgraphics-panel",
+      "description": "Today's observed maximum outdoor temperature and first occurrence time (America/New_York)",
+      "pluginVersion": "2.2.3"
     },
     {
       "datasource": {
@@ -561,10 +564,7 @@
         "uid": "weather-postgres"
       },
       "fieldConfig": {
-        "defaults": {
-          "unit": "fahrenheit",
-          "decimals": 1
-        },
+        "defaults": {},
         "overrides": []
       },
       "gridPos": {
@@ -575,32 +575,38 @@
       },
       "id": 14,
       "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto",
-        "wideLayout": true
+        "add100Percentage": true,
+        "centerAlignContent": true,
+        "overflow": "hidden",
+        "useGrafanaScrollbar": false,
+        "SVGBaseFix": true,
+        "codeData": "{}",
+        "rootCSS": "",
+        "css": ".extreme-card { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 3px; box-sizing: border-box; padding: 3px; font-family: Inter, Arial, sans-serif; text-align: center; color: var(--grafana-text-primary, #e8edf4); } .extreme-temp { font-size: clamp(20px, 2.5vw, 36px); font-weight: 650; line-height: 1.1; white-space: nowrap; } .extreme-time { font-size: clamp(12px, 1.2vw, 17px); opacity: .72; white-space: nowrap; }",
+        "html": "<div class=\"extreme-card\"><div class=\"extreme-temp\" id=\"extreme-temp\">--°F</div><div class=\"extreme-time\" id=\"extreme-time\">--</div></div>",
+        "onRender": "const fields = data.series?.flatMap(series => series.fields || []) || [];\nconst value = name => {\n  const field = fields.find(f => f.name === name);\n  if (!field?.values?.length) return null;\n  const i = field.values.length - 1;\n  return field.values.get ? field.values.get(i) : field.values[i];\n};\nconst temp = value('Temperature');\nconst time = value('Time');\nconst tempNode = htmlNode.getElementById('extreme-temp');\nconst timeNode = htmlNode.getElementById('extreme-time');\nif (!tempNode || !timeNode) return;\ntempNode.textContent = temp == null || !Number.isFinite(Number(temp)) ? '--°F' : Number(temp).toFixed(1) + '°F';\ntimeNode.textContent = time == null || !String(time).trim() ? 'No reading today' : 'at ' + String(time).trim();",
+        "renderOnMount": true,
+        "panelupdateOnMount": true,
+        "dynamicHtmlGraphics": false,
+        "dynamicData": false,
+        "dynamicFieldDisplayValues": false,
+        "dynamicProps": false,
+        "onInitOnResize": false,
+        "onInit": ""
       },
       "targets": [
         {
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT MIN(outdoor_temp_f) AS \"Today's Low\" FROM weather_observation WHERE observed_at >= (date_trunc('day', NOW() AT TIME ZONE 'America/New_York') AT TIME ZONE 'America/New_York') AND observed_at <= NOW()",
+          "rawSql": "SELECT outdoor_temp_f AS \"Temperature\", to_char(observed_at AT TIME ZONE 'America/New_York', 'FMHH12:MI AM') AS \"Time\" FROM weather_observation WHERE observed_at >= (date_trunc('day', NOW() AT TIME ZONE 'America/New_York') AT TIME ZONE 'America/New_York') AND observed_at <= NOW() AND outdoor_temp_f IS NOT NULL ORDER BY outdoor_temp_f ASC, observed_at ASC LIMIT 1",
           "refId": "A"
         }
       ],
       "title": "Today's Low",
-      "type": "stat",
-      "description": "Observed outdoor temperature since local midnight (America/New_York)"
+      "type": "gapit-htmlgraphics-panel",
+      "description": "Today's observed minimum outdoor temperature and first occurrence time (America/New_York)",
+      "pluginVersion": "2.2.3"
     }
   ],
   "refresh": "30s",
