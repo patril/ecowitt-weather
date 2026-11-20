@@ -32,6 +32,21 @@ def calculate_and_upsert(observation_date: date) -> None:
                     FROM weather_observation
                     WHERE observed_at >= %s AND observed_at < %s
                 ),
+                extreme_times AS (
+                    SELECT
+                        (SELECT observed_at
+                         FROM weather_observation
+                         WHERE observed_at >= %s AND observed_at < %s
+                           AND outdoor_temp_f IS NOT NULL
+                         ORDER BY outdoor_temp_f DESC, observed_at ASC
+                         LIMIT 1) AS high_temp_at,
+                        (SELECT observed_at
+                         FROM weather_observation
+                         WHERE observed_at >= %s AND observed_at < %s
+                           AND outdoor_temp_f IS NOT NULL
+                         ORDER BY outdoor_temp_f ASC, observed_at ASC
+                         LIMIT 1) AS low_temp_at
+                ),
                 rain AS (
                     SELECT MAX(daily_rain_in) AS rainfall_in
                     FROM rain_observation
@@ -58,6 +73,8 @@ def calculate_and_upsert(observation_date: date) -> None:
                     observation_date,
                     high_temp_f,
                     low_temp_f,
+                    high_temp_at,
+                    low_temp_at,
                     mean_dewpoint_f,
                     rainfall_in,
                     peak_gust_mph,
@@ -74,6 +91,8 @@ def calculate_and_upsert(observation_date: date) -> None:
                     %s,
                     weather.high_temp_f,
                     weather.low_temp_f,
+                    extreme_times.high_temp_at,
+                    extreme_times.low_temp_at,
                     weather.mean_dewpoint_f,
                     rain.rainfall_in,
                     weather.peak_gust_mph,
@@ -86,6 +105,7 @@ def calculate_and_upsert(observation_date: date) -> None:
                     weather.sample_count,
                     NOW()
                 FROM weather
+                CROSS JOIN extreme_times
                 CROSS JOIN rain
                 CROSS JOIN lightning
                 LEFT JOIN solar ON TRUE
@@ -93,6 +113,8 @@ def calculate_and_upsert(observation_date: date) -> None:
                 ON CONFLICT (observation_date) DO UPDATE SET
                     high_temp_f = EXCLUDED.high_temp_f,
                     low_temp_f = EXCLUDED.low_temp_f,
+                    high_temp_at = EXCLUDED.high_temp_at,
+                    low_temp_at = EXCLUDED.low_temp_at,
                     mean_dewpoint_f = EXCLUDED.mean_dewpoint_f,
                     rainfall_in = EXCLUDED.rainfall_in,
                     peak_gust_mph = EXCLUDED.peak_gust_mph,
@@ -105,7 +127,7 @@ def calculate_and_upsert(observation_date: date) -> None:
                     sample_count = EXCLUDED.sample_count,
                     calculated_at = NOW()
                 """,
-                (start, end, start, end, start, end, observation_date, observation_date),
+                (start, end, start, end, start, end, start, end, observation_date, observation_date),
             )
         conn.commit()
 
