@@ -14,6 +14,26 @@ A small Raspberry Pi weather-data stack for the Ecowitt GW3000:
 - Pushover notifications for nearby WH57 lightning strikes
 - Containerized cron scheduler for daily solar-energy calculations
 
+## Dashboard screenshots
+
+The Grafana dashboards provide live weather conditions, daily solar-energy measurements, historical station records, and a dedicated kiosk view. Screenshots can be added to `docs/images/` using the filenames below.
+
+### Current Conditions
+
+![Current Conditions dashboard](docs/images/current-conditions.png)
+
+### Weather Kiosk
+
+![Weather Kiosk dashboard](docs/images/weather-kiosk.png)
+
+### Station Records
+
+![Station Records dashboard](docs/images/station-records.png)
+
+### Daily Solar Energy
+
+![Daily Solar Energy dashboard](docs/images/daily-solar-energy.png)
+
 ## Hardware/storage layout
 
 ```text
