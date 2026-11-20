@@ -465,3 +465,7 @@ bash scripts/run-migrations.sh
 # Stop the stack
 docker compose down
 ```
+
+## License
+
+This project is licensed under the [MIT License](LICENSE). Copyright (c) 2026 Patrick Riley.
