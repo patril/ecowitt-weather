@@ -22,17 +22,17 @@ The Grafana dashboards provide live weather conditions, daily solar-energy measu
 
 ![Current Conditions dashboard](docs/images/current-conditions.png)
 
-### Daily Solar Energy
+### Weather Kiosk
 
-![Daily Solar Energy dashboard](docs/images/daily-solar-energy.png)
+![Weather Kiosk dashboard](docs/images/weather-kiosk.png)
 
 ### Station Records
 
 ![Station Records dashboard](docs/images/station-records.png)
 
-### Weather Kiosk
+### Daily Solar Energy
 
-![Weather Kiosk dashboard](docs/images/weather-kiosk.png)
+![Daily Solar Energy dashboard](docs/images/daily-solar-energy.png)
 
 ## Hardware/storage layout
 
