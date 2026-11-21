@@ -347,7 +347,7 @@
       "gridPos": {
         "x": 0,
         "y": 15,
-        "w": 24,
+        "w": 18,
         "h": 2
       },
       "fieldConfig": {
@@ -607,6 +607,55 @@
       "type": "gapit-htmlgraphics-panel",
       "description": "Today's observed minimum outdoor temperature and first occurrence time (America/New_York)",
       "pluginVersion": "2.2.3"
+    },
+    {
+      "id": 15,
+      "title": "Local Time",
+      "description": "Current station-local time (America/New_York), refreshed every 30 seconds with the dashboard.",
+      "type": "stat",
+      "datasource": {
+        "type": "postgres",
+        "uid": "weather-postgres"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 15,
+        "w": 6,
+        "h": 2
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "none",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "textMode": "value",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT to_char(NOW() AT TIME ZONE 'America/New_York', 'FMHH12:MI AM') AS \"Local time\""
+        }
+      ]
     }
   ],
   "refresh": "30s",
