@@ -612,7 +612,7 @@
       "id": 15,
       "title": "Local Time",
       "description": "Current station-local time (America/New_York), refreshed every 30 seconds with the dashboard.",
-      "type": "stat",
+      "type": "gapit-htmlgraphics-panel",
       "datasource": {
         "type": "postgres",
         "uid": "weather-postgres"
@@ -624,28 +624,28 @@
         "h": 2
       },
       "fieldConfig": {
-        "defaults": {
-          "unit": "none",
-          "color": {
-            "mode": "fixed",
-            "fixedColor": "text"
-          }
-        },
+        "defaults": {},
         "overrides": []
       },
       "options": {
-        "colorMode": "none",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "textMode": "value",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        }
+        "add100Percentage": true,
+        "centerAlignContent": true,
+        "overflow": "hidden",
+        "useGrafanaScrollbar": false,
+        "SVGBaseFix": true,
+        "codeData": "{}",
+        "rootCSS": "",
+        "css": ".local-clock { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; font-family: Inter, Arial, sans-serif; color: var(--grafana-text-primary, #e8edf4); } .local-clock-value { font-size: clamp(20px, 2.3vw, 36px); font-weight: 600; white-space: nowrap; }",
+        "html": "<div class=\"local-clock\"><div id=\"clock-value\" class=\"local-clock-value\">--:--</div></div>",
+        "onRender": "const field = data.series?.flatMap(series => series.fields || []).find(field => field.name === 'Local time');\nconst values = field?.values;\nconst i = values?.length ? values.length - 1 : -1;\nconst time = i < 0 ? null : (typeof values.get === 'function' ? values.get(i) : values[i]);\nconst node = htmlNode.getElementById('clock-value');\nif (node) node.textContent = time == null ? '--:--' : String(time);",
+        "renderOnMount": true,
+        "panelupdateOnMount": true,
+        "dynamicHtmlGraphics": false,
+        "dynamicData": false,
+        "dynamicFieldDisplayValues": false,
+        "dynamicProps": false,
+        "onInitOnResize": false,
+        "onInit": ""
       },
       "targets": [
         {
